@@ -1,60 +1,99 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" ng-app="wircApp">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chat simples (frontend separado)</title>
+  <title>WIRC - Angular + GraphQL</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; }
-    .card { max-width: 680px; margin: auto; border: 1px solid #ddd; border-radius: 12px; padding: 16px; }
+    .card { max-width: 760px; margin: auto; border: 1px solid #ddd; border-radius: 12px; padding: 16px; }
     .row { display: flex; gap: 8px; margin-bottom: 8px; }
     input { padding: 8px; width: 100%; }
     button { padding: 8px 12px; }
     ul { list-style: none; padding: 0; max-height: 280px; overflow: auto; border: 1px solid #eee; border-radius: 8px; }
     li { padding: 8px; border-bottom: 1px solid #f2f2f2; }
+    small { color: #555; }
   </style>
 </head>
-<body>
+<body ng-controller="ChatController">
 <div class="card">
-  <h1>Chat WebSocket</h1>
-  <p>Backend Spring Boot em <code>ws://localhost:8080/ws/chat</code></p>
+  <h1>Frontend em AngularJS + GraphQL</h1>
+  <p>Backend GraphQL em <code>http://localhost:8080/graphql</code></p>
+
   <div class="row">
-    <input id="user" placeholder="Seu nome" value="guest" />
+    <input ng-model="user" placeholder="Seu nome" />
   </div>
+
   <div class="row">
-    <input id="message" placeholder="Digite a mensagem" />
-    <button id="send">Enviar</button>
+    <input ng-model="message" placeholder="Digite a mensagem" ng-keydown="$event.key === 'Enter' && sendMessage()" />
+    <button ng-click="sendMessage()">Enviar</button>
   </div>
-  <ul id="messages"></ul>
+
+  <small ng-if="error">Erro: {{ error }}</small>
+
+  <ul>
+    <li ng-repeat="item in messages track by $index">[{{item.user}}] {{item.message}}</li>
+  </ul>
 </div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js"></script>
 <script>
-  const ws = new WebSocket('ws://localhost:8080/ws/chat');
-  const list = document.getElementById('messages');
-  const userInput = document.getElementById('user');
-  const messageInput = document.getElementById('message');
-  const sendBtn = document.getElementById('send');
+  angular.module('wircApp', [])
+    .controller('ChatController', ['$scope', '$http', '$interval', function ($scope, $http, $interval) {
+      $scope.user = 'guest';
+      $scope.message = '';
+      $scope.messages = [];
+      $scope.error = '';
 
-  function append(msg) {
-    const li = document.createElement('li');
-    li.textContent = `[${msg.user}] ${msg.message}`;
-    list.prepend(li);
-  }
+      function runQuery(query, variables) {
+        return $http.post('http://localhost:8080/graphql', {
+          query: query,
+          variables: variables || {}
+        });
+      }
 
-  ws.onmessage = (event) => {
-    append(JSON.parse(event.data));
-  };
+      $scope.loadMessages = function () {
+        runQuery('query { messages { user message } }')
+          .then(function (response) {
+            if (response.data.errors) {
+              $scope.error = response.data.errors[0].message;
+              return;
+            }
+            $scope.messages = response.data.data.messages || [];
+            $scope.error = '';
+          })
+          .catch(function (error) {
+            $scope.error = 'Não foi possível carregar mensagens: ' + (error.statusText || 'erro desconhecido');
+          });
+      };
 
-  sendBtn.onclick = () => {
-    const message = messageInput.value.trim();
-    if (!message) return;
-    ws.send(JSON.stringify({ user: userInput.value || 'guest', message }));
-    messageInput.value = '';
-    messageInput.focus();
-  };
+      $scope.sendMessage = function () {
+        const trimmed = ($scope.message || '').trim();
+        if (!trimmed) return;
 
-  messageInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') sendBtn.click();
-  });
+        runQuery(
+          'mutation($user: String!, $message: String!) { sendMessage(user: $user, message: $message) { user message } }',
+          { user: $scope.user || 'guest', message: trimmed }
+        )
+          .then(function (response) {
+            if (response.data.errors) {
+              $scope.error = response.data.errors[0].message;
+              return;
+            }
+            $scope.message = '';
+            $scope.loadMessages();
+          })
+          .catch(function (error) {
+            $scope.error = 'Não foi possível enviar a mensagem: ' + (error.statusText || 'erro desconhecido');
+          });
+      };
+
+      $scope.loadMessages();
+      const poller = $interval($scope.loadMessages, 2500);
+      $scope.$on('$destroy', function () {
+        $interval.cancel(poller);
+      });
+    }]);
 </script>
 </body>
 </html>
