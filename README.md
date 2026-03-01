@@ -1,9 +1,9 @@
-# WIRC - Chat simples com Spring Boot + AngularJS + GraphQL
+# WIRC - Chat simples com Spring Boot + Angular 20 + GraphQL
 
 Este exemplo sobe backend e frontend ao mesmo tempo:
 
 - Backend Spring Boot com endpoint GraphQL em `http://localhost:8080/graphql`
-- Frontend AngularJS em `http://localhost:4200`
+- Frontend Angular 20 em `http://localhost:4200`
 
 ## Rodar tudo junto (Linux/macOS)
 
@@ -26,11 +26,12 @@ cd backend
 ./mvnw spring-boot:run
 ```
 
-Frontend:
+Frontend (Angular 20):
 
 ```bash
 cd frontend
-python3 -m http.server 4200
+npm install
+npm start
 ```
 
 ## Exemplo de query GraphQL
