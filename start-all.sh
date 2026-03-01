@@ -11,7 +11,8 @@ BACK_PID=$!
 
 (
   cd "$ROOT_DIR/frontend"
-  python3 -m http.server 4200
+  npm install
+  npm start
 ) &
 FRONT_PID=$!
 

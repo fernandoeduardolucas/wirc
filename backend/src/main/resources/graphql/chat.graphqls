@@ -1,0 +1,12 @@
+type Query {
+  messages: [ChatMessage!]!
+}
+
+type Mutation {
+  sendMessage(user: String!, message: String!): ChatMessage!
+}
+
+type ChatMessage {
+  user: String!
+  message: String!
+}
