@@ -40,6 +40,14 @@ export interface ChatNotification {
   highlighted: boolean;
 }
 
+export interface OutboundChatMessage {
+  type: 'SEND_MESSAGE';
+  roomId: string;
+  user: string;
+  message: string;
+  focusedRoom: boolean;
+}
+
 export interface AppUser {
   username: string;
   displayName: string;

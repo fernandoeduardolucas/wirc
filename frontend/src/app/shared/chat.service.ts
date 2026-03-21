@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, defer, from, of } from 'rxjs';
-import { AppError, AppUser, ChatMessage, ChatNotification, ChatRoom, RoomStats, UserMessageCount } from './chat.types';
+import { AppError, AppUser, ChatMessage, ChatNotification, ChatRoom, OutboundChatMessage, RoomStats, UserMessageCount } from './chat.types';
 
 interface GraphqlResponse<T> {
   data?: T;
@@ -17,6 +17,8 @@ interface GraphqlResponse<T> {
 export class ChatService {
   private readonly endpoint = 'http://localhost:8080/graphql';
   private readonly websocketEndpoint = 'ws://localhost:8080/ws/chat';
+  private readonly pendingSocketMessages: OutboundChatMessage[] = [];
+
   loadUsers(activeUser: string): Observable<AppUser[]> {
     if (!activeUser) {
       return of([]);
@@ -82,18 +84,6 @@ export class ChatService {
     return defer(() => from(this.runQuery<{ topUsers: UserMessageCount[] }>('query { topUsers { user totalMessages } }').then((r) => r.data?.topUsers ?? [])));
   }
 
-  sendMessage(roomId: string, user: string, message: string, focusedRoom: boolean): Observable<ChatMessage> {
-    return defer(() => from(this.runQuery<{ sendMessage: ChatMessage }>(
-      'mutation($roomId: String!, $user: String!, $message: String!, $focusedRoom: Boolean!) { sendMessage(roomId: $roomId, user: $user, message: $message, focusedRoom: $focusedRoom) { id roomId user message sentAt highlighted } }',
-      { roomId, user, message, focusedRoom }
-    ).then((r) => {
-      if (!r.data?.sendMessage) {
-        throw this.createError('Resposta GraphQL inválida para sendMessage.');
-      }
-      return r.data.sendMessage;
-    })));
-  }
-
   focusRoom(roomId: string, activeUser: string): Observable<ChatRoom> {
     return defer(() => from(this.runQuery<{ focusRoom: ChatRoom }>(
       'mutation($roomId: String!, $activeUser: String!) { focusRoom(roomId: $roomId, activeUser: $activeUser) { id name participants state unreadMessages canManageMembers } }',
@@ -132,8 +122,33 @@ export class ChatService {
 
   connectNotifications(onNotification: (notification: ChatNotification) => void): WebSocket {
     const socket = new WebSocket(this.websocketEndpoint);
+    socket.onopen = () => this.flushPendingSocketMessages(socket);
     socket.onmessage = (event) => onNotification(JSON.parse(event.data) as ChatNotification);
     return socket;
+  }
+
+  sendMessage(socket: WebSocket | undefined, roomId: string, user: string, message: string, focusedRoom: boolean): void {
+    const payload: OutboundChatMessage = { type: 'SEND_MESSAGE', roomId, user, message, focusedRoom };
+    if (!socket || socket.readyState === WebSocket.CONNECTING) {
+      this.pendingSocketMessages.push(payload);
+      return;
+    }
+
+    if (socket.readyState !== WebSocket.OPEN) {
+      throw this.createError('Ligação WebSocket indisponível para enviar mensagens.');
+    }
+
+    socket.send(JSON.stringify(payload));
+  }
+
+  private flushPendingSocketMessages(socket: WebSocket): void {
+    while (this.pendingSocketMessages.length > 0 && socket.readyState === WebSocket.OPEN) {
+      const payload = this.pendingSocketMessages.shift();
+      if (!payload) {
+        return;
+      }
+      socket.send(JSON.stringify(payload));
+    }
   }
 
   private async runQuery<T>(query: string, variables: Record<string, string | boolean | string[]> = {}): Promise<GraphqlResponse<T>> {
