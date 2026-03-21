@@ -41,6 +41,8 @@ start-all.bat
 
 ### Backend
 
+Requer Java 25.
+
 ```bash
 cd backend
 ./mvnw spring-boot:run
