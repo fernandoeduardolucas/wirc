@@ -1,6 +1,7 @@
 package com.wirc.service;
 
 import com.wirc.model.ChatMessage;
+import com.wirc.persistence.RoomSessionSnapshot;
 import com.wirc.state.RoomState;
 
 import java.util.ArrayList;
@@ -17,9 +18,14 @@ public class RoomSession {
     private long unreadMessages;
 
     public RoomSession(String id, String name, RoomState initialState, List<String> initialParticipants) {
+        this(id, name, initialState, initialParticipants, 0);
+    }
+
+    public RoomSession(String id, String name, RoomState initialState, List<String> initialParticipants, long unreadMessages) {
         this.id = id;
         this.name = name;
         this.state = initialState;
+        this.unreadMessages = unreadMessages;
         this.participants.addAll(initialParticipants);
     }
 
@@ -57,5 +63,15 @@ public class RoomSession {
 
     public void clearUnread() {
         unreadMessages = 0;
+    }
+
+    public RoomSessionSnapshot snapshot() {
+        return new RoomSessionSnapshot(
+                id,
+                name,
+                new ArrayList<>(participants),
+                state.name(),
+                unreadMessages,
+                new ArrayList<>(messages));
     }
 }
