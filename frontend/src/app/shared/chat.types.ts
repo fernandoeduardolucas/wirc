@@ -4,6 +4,7 @@ export interface ChatRoom {
   participants: string[];
   state: string;
   unreadMessages: number;
+  canManageMembers: boolean;
 }
 
 export interface ChatMessage {
@@ -42,6 +43,7 @@ export interface ChatNotification {
 export interface AppUser {
   username: string;
   displayName: string;
+  passwordHint: string;
 }
 
 export interface AppErrorDetails {

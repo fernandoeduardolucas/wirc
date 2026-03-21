@@ -28,4 +28,10 @@ public class ChatRoomMemberEntity {
     @MapsId("username")
     @JoinColumn(name = "username", nullable = false)
     private AppUserEntity user;
+
+    public ChatRoomMemberEntity(ChatRoomEntity room, AppUserEntity user) {
+        this.id = new ChatRoomMemberId(room.getId(), user.getUsername());
+        this.room = room;
+        this.user = user;
+    }
 }

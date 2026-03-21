@@ -10,6 +10,7 @@ export class ChatStore implements OnDestroy {
   private readonly refreshRooms$ = new BehaviorSubject<void>(undefined);
   private readonly activeRoomIdSubject = new BehaviorSubject<string>('');
   private readonly currentUserSubject = new BehaviorSubject<string>('');
+  private readonly authenticatedUserSubject = new BehaviorSubject<string>('');
   private readonly searchResultsSubject = new BehaviorSubject<ChatMessage[]>([]);
   private readonly roomMessagesSubject = new BehaviorSubject<ChatMessage[]>([]);
   private readonly roomStatsSubject = new BehaviorSubject<RoomStats | null>(null);
@@ -30,9 +31,14 @@ export class ChatStore implements OnDestroy {
   );
 
   readonly rooms$ = this.refreshRooms$.pipe(
-    switchMap(() => this.chatService.loadRooms()),
+    switchMap(() => this.chatService.loadRooms(this.authenticatedUserSubject.value)),
     tap((rooms) => {
-      if (!this.activeRoomIdSubject.value && rooms.length > 0) {
+      const activeRoomId = this.activeRoomIdSubject.value;
+      if (!activeRoomId && rooms.length > 0) {
+        this.activeRoomIdSubject.next(rooms[0].id);
+        return;
+      }
+      if (activeRoomId && !rooms.some((room) => room.id === activeRoomId) && rooms.length > 0) {
         this.activeRoomIdSubject.next(rooms[0].id);
       }
     }),
@@ -41,6 +47,7 @@ export class ChatStore implements OnDestroy {
 
   readonly activeRoomId$ = this.activeRoomIdSubject.asObservable();
   readonly currentUser$ = this.currentUserSubject.asObservable();
+  readonly authenticatedUser$ = this.authenticatedUserSubject.asObservable();
   readonly messages$ = this.roomMessagesSubject.asObservable();
   readonly searchResults$ = this.searchResultsSubject.asObservable();
   readonly stats$ = this.roomStatsSubject.asObservable();
@@ -52,6 +59,7 @@ export class ChatStore implements OnDestroy {
     rooms: this.rooms$,
     activeRoomId: this.activeRoomId$,
     currentUser: this.currentUser$,
+    authenticatedUser: this.authenticatedUser$,
     messages: this.messages$,
     searchResults: this.searchResults$,
     stats: this.stats$,
@@ -96,6 +104,21 @@ export class ChatStore implements OnDestroy {
     this.currentUserSubject.next(displayName);
   }
 
+  authenticate(displayName: string, password: string): void {
+    const normalizedUser = displayName.trim();
+    const normalizedPassword = password.trim();
+    if (!normalizedUser || normalizedUser !== normalizedPassword) {
+      this.errorSubject.next({ message: 'Credenciais inválidas. Use user/password iguais, por exemplo Ana / Ana.' });
+      return;
+    }
+
+    this.currentUserSubject.next(normalizedUser);
+    this.authenticatedUserSubject.next(normalizedUser);
+    this.errorSubject.next(null);
+    this.notificationSubject.next(`Identidade assumida: ${normalizedUser}`);
+    this.refresh();
+  }
+
   selectRoom(roomId: string): void {
     this.notificationSubject.next('');
     this.errorSubject.next(null);
@@ -128,6 +151,44 @@ export class ChatStore implements OnDestroy {
     ).subscribe();
   }
 
+  createRoom(name: string, participants: string[]): void {
+    const activeUser = this.authenticatedUserSubject.value;
+    if (!activeUser) {
+      this.errorSubject.next({ message: 'Assuma primeiro uma identidade válida para criar canais.' });
+      return;
+    }
+
+    this.chatService.createRoom(name.trim(), activeUser, participants).pipe(
+      catchError((error: Error) => this.handleError(error, null))
+    ).subscribe((room) => {
+      if (!room) {
+        return;
+      }
+      this.activeRoomIdSubject.next(room.id);
+      this.notificationSubject.next(`Canal criado: ${room.name}`);
+      this.refresh();
+    });
+  }
+
+  addMemberToActiveRoom(member: string): void {
+    const roomId = this.activeRoomIdSubject.value;
+    const activeUser = this.authenticatedUserSubject.value;
+    if (!roomId || !activeUser) {
+      this.errorSubject.next({ message: 'Selecione um canal e assuma uma identidade antes de adicionar membros.' });
+      return;
+    }
+
+    this.chatService.addMemberToRoom(roomId, member.trim(), activeUser).pipe(
+      catchError((error: Error) => this.handleError(error, null))
+    ).subscribe((room) => {
+      if (!room) {
+        return;
+      }
+      this.notificationSubject.next(`Membro adicionado ao canal ${room.name}.`);
+      this.refresh();
+    });
+  }
+
   roomName(rooms: ChatRoom[], roomId: string): string {
     return rooms.find((room) => room.id === roomId)?.name ?? roomId;
   }
@@ -139,7 +200,7 @@ export class ChatStore implements OnDestroy {
   }
 
   private focusRoom(roomId: string): void {
-    this.chatService.focusRoom(roomId).pipe(catchError(() => EMPTY)).subscribe(() => this.refreshRooms$.next());
+    this.chatService.focusRoom(roomId, this.authenticatedUserSubject.value).pipe(catchError(() => EMPTY)).subscribe(() => this.refreshRooms$.next());
   }
 
   private handleNotification(notification: ChatNotification): void {

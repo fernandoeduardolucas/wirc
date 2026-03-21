@@ -1,12 +1,12 @@
 package com.wirc.controller;
 
 import com.wirc.model.AppUser;
+import com.wirc.model.ChatCommand;
 import com.wirc.model.ChatMessage;
 import com.wirc.model.ChatRoom;
 import com.wirc.model.RoomStats;
 import com.wirc.model.UserMessageCount;
 import com.wirc.service.ChatApplicationFacade;
-import com.wirc.model.ChatCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
@@ -26,8 +26,8 @@ public class ChatGraphqlController {
     }
 
     @QueryMapping
-    public List<ChatRoom> rooms() {
-        return chatFacade.rooms();
+    public List<ChatRoom> rooms(@Argument String activeUser) {
+        return chatFacade.rooms(activeUser);
     }
 
     @QueryMapping
@@ -61,7 +61,17 @@ public class ChatGraphqlController {
     }
 
     @MutationMapping
-    public ChatRoom focusRoom(@Argument String roomId) {
-        return chatFacade.focusRoom(roomId);
+    public ChatRoom focusRoom(@Argument String roomId, @Argument String activeUser) {
+        return chatFacade.focusRoom(roomId, activeUser);
+    }
+
+    @MutationMapping
+    public ChatRoom createRoom(@Argument String name, @Argument String activeUser, @Argument List<String> participants) {
+        return chatFacade.createRoom(name, activeUser, participants);
+    }
+
+    @MutationMapping
+    public ChatRoom addMemberToRoom(@Argument String roomId, @Argument String member, @Argument String activeUser) {
+        return chatFacade.addMemberToRoom(roomId, member, activeUser);
     }
 }

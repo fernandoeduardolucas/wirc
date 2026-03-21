@@ -27,4 +27,16 @@ public class ChatRoomEntity {
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ChatRoomMemberEntity> members = new LinkedHashSet<>();
+
+    public ChatRoomEntity(String id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public void addMember(AppUserEntity user) {
+        boolean exists = members.stream().anyMatch(member -> member.getUser().getUsername().equalsIgnoreCase(user.getUsername()));
+        if (!exists) {
+            members.add(new ChatRoomMemberEntity(this, user));
+        }
+    }
 }

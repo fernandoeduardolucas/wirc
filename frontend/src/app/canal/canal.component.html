@@ -17,6 +17,21 @@
       }
     </div>
 
+    @if (room.canManageMembers) {
+      <div class="card mini-stats section-stack compact-stack">
+        <h3>Adicionar membro</h3>
+        <select [(ngModel)]="selectedMember">
+          <option value="">Escolha um utilizador</option>
+          @for (user of users; track user.username) {
+            @if (!room.participants.includes(user.displayName)) {
+              <option [value]="user.displayName">{{ user.displayName }}</option>
+            }
+          }
+        </select>
+        <button [disabled]="!authenticatedUser || !selectedMember" (click)="addMember()">Adicionar ao canal</button>
+      </div>
+    }
+
     <div class="card mini-stats">
       <h3>Top utilizadores</h3>
       <ol>

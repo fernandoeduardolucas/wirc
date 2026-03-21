@@ -7,7 +7,8 @@ public record ChatRoom(
         String name,
         List<String> participants,
         String state,
-        int unreadMessages
+        int unreadMessages,
+        boolean canManageMembers
 ) {
     public ChatRoom {
         participants = List.copyOf(participants);
