@@ -3,13 +3,13 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { AppUser } from '../shared/chat.types';
 
 @Component({
-  selector: 'app-identidade',
+  selector: 'app-identity',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './identidade.component.html',
-  styleUrl: './identidade.component.css'
+  templateUrl: './identity.component.html',
+  styleUrl: './identity.component.css'
 })
-export class IdentidadeComponent {
+export class IdentityComponent {
   @Input({ required: true }) users: AppUser[] = [];
   @Input({ required: true }) currentUser = '';
   @Output() userSelected = new EventEmitter<string>();

@@ -3,13 +3,13 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ChatRoom } from '../shared/chat.types';
 
 @Component({
-  selector: 'app-salas',
+  selector: 'app-rooms',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './salas.component.html',
-  styleUrl: './salas.component.css'
+  templateUrl: './rooms.component.html',
+  styleUrl: './rooms.component.css'
 })
-export class SalasComponent {
+export class RoomsComponent {
   @Input({ required: true }) rooms: ChatRoom[] = [];
   @Input({ required: true }) activeRoomId = '';
   @Output() roomSelected = new EventEmitter<string>();
