@@ -13,3 +13,10 @@ databaseChangeLog:
         - sqlFile:
             path: db/changelog/002-seed-users-and-rooms.sql
             relativeToChangelogFile: false
+  - changeSet:
+      id: 003-create-chat-session-and-message-tables
+      author: codex
+      changes:
+        - sqlFile:
+            path: db/changelog/003-create-chat-session-and-message-tables.sql
+            relativeToChangelogFile: false
