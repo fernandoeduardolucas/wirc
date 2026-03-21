@@ -1,4 +1,4 @@
-package com.wirc.backend.graphql;
+package com.wirc.graphql;
 
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
