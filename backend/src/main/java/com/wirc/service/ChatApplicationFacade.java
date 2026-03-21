@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.SequencedMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -126,7 +127,7 @@ public class ChatApplicationFacade {
 
     public RoomStats roomStats(String roomId) {
         RoomSession room = requireRoom(roomId);
-        Map<String, Long> perUser = room.messages().stream()
+        SequencedMap<String, Long> perUser = room.messages().stream()
                 .collect(Collectors.groupingBy(ChatMessage::user, LinkedHashMap::new, Collectors.counting()));
 
         String busiestUser = perUser.entrySet().stream()

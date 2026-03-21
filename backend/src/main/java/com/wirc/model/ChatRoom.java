@@ -9,4 +9,7 @@ public record ChatRoom(
         String state,
         int unreadMessages
 ) {
+    public ChatRoom {
+        participants = List.copyOf(participants);
+    }
 }
