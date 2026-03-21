@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: wirc-postgres
+    environment:
+      POSTGRES_DB: wirc
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - wirc_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  wirc_data:
