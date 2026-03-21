@@ -1,5 +1,6 @@
 package com.wirc.controller;
 
+import com.wirc.model.AppUser;
 import com.wirc.model.ChatMessage;
 import com.wirc.model.ChatRoom;
 import com.wirc.model.RoomStats;
@@ -19,6 +20,11 @@ public class ChatGraphqlController {
 
     public ChatGraphqlController(ChatApplicationFacade chatFacade) {
         this.chatFacade = chatFacade;
+    }
+
+    @QueryMapping
+    public List<AppUser> users() {
+        return chatFacade.users();
     }
 
     @QueryMapping

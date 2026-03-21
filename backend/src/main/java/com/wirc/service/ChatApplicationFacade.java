@@ -1,12 +1,14 @@
 package com.wirc.service;
 
 import com.wirc.bootstrap.DatabaseChatRoomLoader;
+import com.wirc.model.AppUser;
 import com.wirc.model.ChatMessage;
 import com.wirc.model.ChatNotification;
 import com.wirc.model.ChatRoom;
 import com.wirc.model.RoomStats;
 import com.wirc.model.UserMessageCount;
 import com.wirc.persistence.DatabaseChatStateStore;
+import com.wirc.persistence.repository.AppUserRepository;
 import com.wirc.validation.MessageLengthValidationHandler;
 import com.wirc.validation.MessageValidationHandler;
 import com.wirc.validation.ParticipantValidationHandler;
@@ -31,14 +33,17 @@ public class ChatApplicationFacade {
     private final WebSocketNotificationGateway notificationGateway;
     private final MessageValidationHandler validationChain;
     private final DatabaseChatStateStore chatStateStore;
+    private final AppUserRepository appUserRepository;
 
     public ChatApplicationFacade(
             ChatRoomFactory roomFactory,
             DatabaseChatRoomLoader databaseChatRoomLoader,
             WebSocketNotificationGateway notificationGateway,
-            DatabaseChatStateStore chatStateStore) {
+            DatabaseChatStateStore chatStateStore,
+            AppUserRepository appUserRepository) {
         this.notificationGateway = notificationGateway;
         this.chatStateStore = chatStateStore;
+        this.appUserRepository = appUserRepository;
         loadRooms(roomFactory, databaseChatRoomLoader);
         this.validationChain = buildValidationChain();
     }
@@ -54,6 +59,12 @@ public class ChatApplicationFacade {
                 .linkWith(new ParticipantValidationHandler(rooms))
                 .linkWith(new MessageLengthValidationHandler());
         return required;
+    }
+
+    public List<AppUser> users() {
+        return appUserRepository.findAllByOrderByDisplayNameAsc().stream()
+                .map(user -> new AppUser(user.getUsername(), user.getDisplayName()))
+                .toList();
     }
 
     public List<ChatRoom> rooms() {
