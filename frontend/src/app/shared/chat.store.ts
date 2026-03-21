@@ -167,9 +167,12 @@ export class ChatStore implements OnDestroy {
       return;
     }
 
-    this.chatService.sendMessage(roomId, user, normalized, true).pipe(
-      catchError((error: Error) => this.handleError(error, null))
-    ).subscribe();
+    try {
+      this.chatService.sendMessage(this.socket, roomId, user, normalized, true);
+      this.errorSubject.next(null);
+    } catch (error) {
+      this.handleError(error as Error, null).subscribe();
+    }
   }
 
   createRoom(name: string, participants: string[]): void {
@@ -234,6 +237,11 @@ export class ChatStore implements OnDestroy {
       return;
     }
 
+    if (notification.type === 'ERROR') {
+      this.errorSubject.next({ message: notification.preview });
+      return;
+    }
+
     const activeRoomId = this.activeRoomIdSubject.value;
     const currentUser = this.currentUserSubject.value.trim().toLowerCase();
     const notificationUser = notification.user?.trim().toLowerCase();
@@ -249,7 +257,7 @@ export class ChatStore implements OnDestroy {
         highlighted: notification.highlighted
       };
 
-      if (notification.roomId === activeRoomId && !isOwnMessage) {
+      if (notification.roomId === activeRoomId) {
         const currentMessages = this.roomMessagesSubject.value;
         if (!currentMessages.some((message) => message.id === liveMessage.id)) {
           this.roomMessagesSubject.next([...currentMessages, liveMessage]);
@@ -257,7 +265,7 @@ export class ChatStore implements OnDestroy {
       }
 
       this.refresh();
-      this.notificationSubject.next(`${notification.user ?? 'Sistema'}: ${notification.preview}`);
+      this.notificationSubject.next(isOwnMessage ? 'Mensagem enviada em tempo real.' : `${notification.user ?? 'Sistema'}: ${notification.preview}`);
     }
   }
 

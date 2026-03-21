@@ -5,8 +5,8 @@ Aplicação de chat com várias salas, notificações em tempo real e estatísti
 ## Funcionalidades
 
 - Salas de chat múltiplas com participantes diferentes.
-- Envio de mensagens via GraphQL.
-- Listagem de salas, mensagens, pesquisa textual, estatísticas por sala e top 3 utilizadores via GraphQL.
+- Envio e notificações de mensagens em tempo real via WebSocket.
+- Listagem de salas, histórico, pesquisa textual, estatísticas por sala e top 3 utilizadores via GraphQL.
 - Notificações instantâneas de mensagens em salas não focadas via WebSocket.
 - Uso explícito dos padrões **Facade**, **Chain of Responsibility**, **State** e **Factory**, identificados com comentários no código.
 
@@ -71,19 +71,16 @@ query {
 }
 ```
 
-### Enviar mensagem
+### Enviar mensagem por WebSocket
 
-```graphql
-mutation {
-  sendMessage(
-    roomId: "room-equipa"
-    user: "Ana"
-    message: "Vamos validar GraphQL e WebSocket hoje"
-    focusedRoom: true
-  ) {
-    user
-    message
-    highlighted
-  }
+Envie o seguinte JSON para `ws://localhost:8080/ws/chat`:
+
+```json
+{
+  "type": "SEND_MESSAGE",
+  "roomId": "room-equipa",
+  "user": "Ana",
+  "message": "Vamos validar GraphQL e WebSocket hoje",
+  "focusedRoom": true
 }
 ```
