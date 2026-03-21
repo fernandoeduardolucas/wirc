@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.SequencedMap;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -84,6 +85,8 @@ public class ChatApplicationFacade {
     }
 
     public ChatMessage sendMessage(ChatCommand command) {
+        String canonicalUsername = resolveCanonicalUsername(command.user())
+                .orElseThrow(() -> new IllegalArgumentException("Utilizador não encontrado: " + command.user()));
         validationChain.validate(command);
         RoomSession room = requireRoom(command.roomId());
         boolean highlighted = command.message().toLowerCase(Locale.ROOT).contains("graphql")
@@ -92,7 +95,7 @@ public class ChatApplicationFacade {
         ChatMessage chatMessage = new ChatMessage(
                 UUID.randomUUID().toString(),
                 room.id(),
-                command.user(),
+                canonicalUsername,
                 command.message(),
                 Instant.now(),
                 highlighted);
@@ -144,6 +147,13 @@ public class ChatApplicationFacade {
                 .limit(3)
                 .map(entry -> new UserMessageCount(entry.getKey(), Math.toIntExact(entry.getValue())))
                 .toList();
+    }
+
+    private Optional<String> resolveCanonicalUsername(String user) {
+        return appUserRepository.findByUsernameIgnoreCase(user)
+                .map(existingUser -> existingUser.getUsername())
+                .or(() -> appUserRepository.findByDisplayNameIgnoreCase(user)
+                        .map(existingUser -> existingUser.getUsername()));
     }
 
     private ChatRoom toChatRoom(RoomSession room) {
