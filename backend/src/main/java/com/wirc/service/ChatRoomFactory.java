@@ -1,6 +1,6 @@
-package com.wirc.backend.service;
+package com.wirc.service;
 
-import com.wirc.backend.state.FocusedRoomState;
+import com.wirc.state.FocusedRoomState;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

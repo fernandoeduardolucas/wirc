@@ -1,7 +1,7 @@
-package com.wirc.backend.service;
+package com.wirc.service;
 
-import com.wirc.backend.model.ChatMessage;
-import com.wirc.backend.state.RoomState;
+import com.wirc.model.ChatMessage;
+import com.wirc.state.RoomState;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;

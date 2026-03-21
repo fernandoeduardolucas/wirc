@@ -1,4 +1,4 @@
-package com.wirc.backend.model;
+package com.wirc.model;
 
 public record RoomStats(
         String roomId,

@@ -1,28 +1,63 @@
 package com.wirc.controller;
 
-import com.wirc.dto.GraphqlChatMessage;
+import com.wirc.model.ChatMessage;
+import com.wirc.model.ChatRoom;
+import com.wirc.model.RoomStats;
+import com.wirc.model.UserMessageCount;
+import com.wirc.service.ChatApplicationFacade;
+import com.wirc.service.ChatCommand;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Controller
 public class ChatGraphqlController {
+    private final ChatApplicationFacade chatFacade;
 
-    private final List<GraphqlChatMessage> messages = new ArrayList<>();
+    public ChatGraphqlController(ChatApplicationFacade chatFacade) {
+        this.chatFacade = chatFacade;
+    }
 
     @QueryMapping
-    public List<GraphqlChatMessage> messages() {
-        return List.copyOf(messages);
+    public List<ChatRoom> rooms() {
+        return chatFacade.rooms();
+    }
+
+    @QueryMapping
+    public List<ChatMessage> messagesByRoom(@Argument String roomId) {
+        return chatFacade.messagesByRoom(roomId);
+    }
+
+    @QueryMapping
+    public List<ChatMessage> searchMessages(@Argument String term) {
+        return chatFacade.searchMessages(term);
+    }
+
+    @QueryMapping
+    public RoomStats roomStats(@Argument String roomId) {
+        return chatFacade.roomStats(roomId);
+    }
+
+    @QueryMapping
+    public List<UserMessageCount> topUsers() {
+        return chatFacade.topUsers();
     }
 
     @MutationMapping
-    public GraphqlChatMessage sendMessage(@Argument String user, @Argument String message) {
-        GraphqlChatMessage created = new GraphqlChatMessage(user, message);
-        messages.add(created);
-        return created;
+    public ChatMessage sendMessage(
+            @Argument String roomId,
+            @Argument String user,
+            @Argument String message,
+            @Argument boolean focusedRoom
+    ) {
+        return chatFacade.sendMessage(new ChatCommand(roomId, user, message, focusedRoom));
+    }
+
+    @MutationMapping
+    public ChatRoom focusRoom(@Argument String roomId) {
+        return chatFacade.focusRoom(roomId);
     }
 }

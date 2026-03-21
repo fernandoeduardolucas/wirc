@@ -1,6 +1,6 @@
-package com.wirc.backend.state;
+package com.wirc.state;
 
-import com.wirc.backend.service.RoomSession;
+import com.wirc.service.RoomSession;
 
 public class NotifiedRoomState implements RoomState {
     @Override

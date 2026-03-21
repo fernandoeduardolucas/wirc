@@ -1,8 +1,8 @@
-package com.wirc.backend.websocket;
+package com.wirc.websocket;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wirc.backend.model.ChatNotification;
+import com.wirc.model.ChatNotification;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;

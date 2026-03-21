@@ -1,6 +1,6 @@
-package com.wirc.backend.validation;
+package com.wirc.validation;
 
-import com.wirc.backend.service.ChatCommand;
+import com.wirc.service.ChatCommand;
 
 public class MessageLengthValidationHandler extends MessageValidationHandler {
     @Override

@@ -1,6 +1,6 @@
-package com.wirc.backend.config;
+package com.wirc.config;
 
-import com.wirc.backend.websocket.ChatWebSocketHandler;
+import com.wirc.websocket.ChatWebSocketHandler;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;

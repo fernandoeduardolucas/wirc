@@ -1,4 +1,4 @@
-package com.wirc.backend.websocket;
+package com.wirc.websocket;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;

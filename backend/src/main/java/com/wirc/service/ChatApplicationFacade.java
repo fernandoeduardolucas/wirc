@@ -1,15 +1,15 @@
-package com.wirc.backend.service;
+package com.wirc.service;
 
-import com.wirc.backend.model.ChatMessage;
-import com.wirc.backend.model.ChatNotification;
-import com.wirc.backend.model.ChatRoom;
-import com.wirc.backend.model.RoomStats;
-import com.wirc.backend.model.UserMessageCount;
-import com.wirc.backend.validation.MessageLengthValidationHandler;
-import com.wirc.backend.validation.MessageValidationHandler;
-import com.wirc.backend.validation.ParticipantValidationHandler;
-import com.wirc.backend.validation.RequiredFieldValidationHandler;
-import com.wirc.backend.websocket.WebSocketNotificationGateway;
+import com.wirc.model.ChatMessage;
+import com.wirc.model.ChatNotification;
+import com.wirc.model.ChatRoom;
+import com.wirc.model.RoomStats;
+import com.wirc.model.UserMessageCount;
+import com.wirc.validation.MessageLengthValidationHandler;
+import com.wirc.validation.MessageValidationHandler;
+import com.wirc.validation.ParticipantValidationHandler;
+import com.wirc.validation.RequiredFieldValidationHandler;
+import com.wirc.websocket.WebSocketNotificationGateway;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;

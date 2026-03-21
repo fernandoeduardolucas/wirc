@@ -2,7 +2,7 @@ package com.wirc.chat;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wirc.dto.ChatMessage;
+import com.wirc.model.ChatMessage;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
