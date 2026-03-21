@@ -87,7 +87,12 @@ public class ChatApplicationFacade {
     public ChatMessage sendMessage(ChatCommand command) {
         String canonicalUsername = resolveCanonicalUsername(command.user())
                 .orElseThrow(() -> new IllegalArgumentException("Utilizador não encontrado: " + command.user()));
-        validationChain.validate(command);
+        ChatCommand validatedCommand = new ChatCommand(
+                command.roomId(),
+                canonicalUsername,
+                command.message(),
+                command.focusedRoom());
+        validationChain.validate(validatedCommand);
         RoomSession room = requireRoom(command.roomId());
         boolean highlighted = command.message().toLowerCase(Locale.ROOT).contains("graphql")
                 || command.message().toLowerCase(Locale.ROOT).contains("websocket");
@@ -104,15 +109,16 @@ public class ChatApplicationFacade {
         room.state().onMessageSent(room, command.focusedRoom());
         persistState();
 
-        if (!command.focusedRoom()) {
-            notificationGateway.broadcast(new ChatNotification(
-                    room.id(),
-                    room.name(),
-                    command.message(),
-                    command.user(),
-                    "NEW_MESSAGE"
-            ));
-        }
+        notificationGateway.broadcast(new ChatNotification(
+                room.id(),
+                room.name(),
+                command.message(),
+                canonicalUsername,
+                "NEW_MESSAGE",
+                chatMessage.id(),
+                chatMessage.sentAt(),
+                chatMessage.highlighted()
+        ));
 
         return chatMessage;
     }

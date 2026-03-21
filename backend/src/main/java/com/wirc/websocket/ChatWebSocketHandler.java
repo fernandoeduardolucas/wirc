@@ -15,7 +15,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         gateway.addSession(session);
-        session.sendMessage(new TextMessage("{\"type\":\"CONNECTED\",\"preview\":\"Ligação websocket estabelecida.\"}"));
+        session.sendMessage(new TextMessage("{\"type\":\"CONNECTED\",\"preview\":\"Ligação websocket estabelecida.\",\"highlighted\":false}"));
     }
 
     @Override

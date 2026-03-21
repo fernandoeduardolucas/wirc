@@ -34,6 +34,9 @@ export interface ChatNotification {
   preview: string;
   user?: string;
   type: string;
+  messageId?: string;
+  sentAt?: string;
+  highlighted: boolean;
 }
 
 export interface AppUser {

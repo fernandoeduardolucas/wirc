@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { BehaviorSubject, EMPTY, Subject, combineLatest, interval } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, combineLatest } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { ChatService } from './chat.service';
 import { AppUser, ChatMessage, ChatNotification, ChatRoom, RoomStats, UserMessageCount } from './chat.types';
@@ -81,11 +81,6 @@ export class ChatStore implements OnDestroy {
       catchError((error: Error) => this.handleError(error, [] as UserMessageCount[]))
     ).subscribe((users) => this.topUsersSubject.next(users));
 
-    interval(5000).pipe(
-      tap(() => this.refresh()),
-      catchError(() => EMPTY)
-    ).subscribe();
-
     try {
       this.socket = this.chatService.connectNotifications((notification) => this.handleNotification(notification));
     } catch {
@@ -128,12 +123,8 @@ export class ChatStore implements OnDestroy {
     }
 
     this.chatService.sendMessage(roomId, user, normalized, true).pipe(
-      tap(() => this.refresh()),
       catchError((error: Error) => this.handleError(error, null))
-    ).subscribe(() => {
-      this.chatService.loadMessages(roomId).subscribe((messages) => this.roomMessagesSubject.next(messages));
-      this.chatService.loadRoomStats(roomId).subscribe((stats) => this.roomStatsSubject.next(stats));
-    });
+    ).subscribe();
   }
 
   roomName(rooms: ChatRoom[], roomId: string): string {
@@ -151,8 +142,52 @@ export class ChatStore implements OnDestroy {
   }
 
   private handleNotification(notification: ChatNotification): void {
-    this.notificationSubject.next(`${notification.user ?? 'Sistema'}: ${notification.preview}`);
-    this.refresh();
+    if (notification.type === 'CONNECTED') {
+      this.notificationSubject.next(notification.preview);
+      return;
+    }
+
+    const activeRoomId = this.activeRoomIdSubject.value;
+    const currentUser = this.currentUserSubject.value.trim().toLowerCase();
+    const notificationUser = notification.user?.trim().toLowerCase();
+    const isOwnMessage = notification.type === 'NEW_MESSAGE' && currentUser !== '' && notificationUser === currentUser;
+
+    if (notification.type === 'NEW_MESSAGE' && notification.roomId && notification.messageId && notification.sentAt) {
+      const liveMessage: ChatMessage = {
+        id: notification.messageId,
+        roomId: notification.roomId,
+        user: notification.user ?? 'Sistema',
+        message: notification.preview,
+        sentAt: notification.sentAt,
+        highlighted: notification.highlighted
+      };
+
+      if (notification.roomId === activeRoomId) {
+        this.appendLiveMessage(liveMessage);
+        this.refreshRoomStats(activeRoomId);
+      }
+    }
+
+    if (!isOwnMessage) {
+      this.notificationSubject.next(`${notification.user ?? 'Sistema'}: ${notification.preview}`);
+    }
+
+    this.refreshRooms$.next();
+  }
+
+  private appendLiveMessage(message: ChatMessage): void {
+    const messages = this.roomMessagesSubject.value;
+    if (messages.some((existingMessage) => existingMessage.id === message.id)) {
+      return;
+    }
+
+    this.roomMessagesSubject.next([...messages, message]);
+  }
+
+  private refreshRoomStats(roomId: string): void {
+    this.chatService.loadRoomStats(roomId).pipe(
+      catchError((error: Error) => this.handleError(error, null))
+    ).subscribe((stats) => this.roomStatsSubject.next(stats));
   }
 
   private handleError<T>(error: Error, fallback: T) {
