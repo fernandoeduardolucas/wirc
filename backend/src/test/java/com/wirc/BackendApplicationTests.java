@@ -1,7 +1,7 @@
 package com.wirc;
 
 import com.wirc.service.ChatApplicationFacade;
-import com.wirc.service.ChatCommand;
+import com.wirc.model.ChatCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

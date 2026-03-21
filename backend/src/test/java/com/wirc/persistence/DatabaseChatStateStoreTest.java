@@ -1,8 +1,8 @@
 package com.wirc.persistence;
 
-import com.wirc.persistence.repository.ChatMessageRepository;
-import com.wirc.persistence.repository.ChatRoomRepository;
-import com.wirc.persistence.repository.RoomSessionStateRepository;
+import com.wirc.repository.ChatMessageRepository;
+import com.wirc.repository.ChatRoomRepository;
+import com.wirc.repository.RoomSessionStateRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

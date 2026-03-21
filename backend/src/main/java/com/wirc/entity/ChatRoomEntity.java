@@ -1,4 +1,4 @@
-package com.wirc.persistence.entity;
+package com.wirc.entity;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -17,6 +17,7 @@ import java.util.Set;
 @Getter
 @NoArgsConstructor
 public class ChatRoomEntity {
+
     @Id
     @Column(name = "id", nullable = false, length = 100)
     private String id;

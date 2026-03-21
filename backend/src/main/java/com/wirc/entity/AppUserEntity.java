@@ -1,4 +1,4 @@
-package com.wirc.persistence.entity;
+package com.wirc.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class AppUserEntity {
+
     @Id
     @Column(name = "username", nullable = false, length = 100)
     private String username;

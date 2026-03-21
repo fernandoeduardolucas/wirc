@@ -1,7 +1,7 @@
 package com.wirc.service;
 
 import com.wirc.model.ChatMessage;
-import com.wirc.persistence.RoomSessionSnapshot;
+import com.wirc.model.RoomSessionSnapshot;
 import com.wirc.state.RoomState;
 
 import java.util.ArrayList;

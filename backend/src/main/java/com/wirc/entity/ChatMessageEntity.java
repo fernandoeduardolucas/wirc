@@ -1,4 +1,4 @@
-package com.wirc.persistence.entity;
+package com.wirc.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,6 +19,7 @@ import java.time.Instant;
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class ChatMessageEntity {
+
     @Id
     @Column(name = "id", nullable = false, length = 100)
     private String id;

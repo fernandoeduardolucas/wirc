@@ -6,7 +6,7 @@ import com.wirc.model.ChatRoom;
 import com.wirc.model.RoomStats;
 import com.wirc.model.UserMessageCount;
 import com.wirc.service.ChatApplicationFacade;
-import com.wirc.service.ChatCommand;
+import com.wirc.model.ChatCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;

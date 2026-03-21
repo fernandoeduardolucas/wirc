@@ -1,13 +1,13 @@
 package com.wirc.bootstrap;
 
 import com.wirc.model.ChatMessage;
-import com.wirc.persistence.RoomSessionSnapshot;
+import com.wirc.model.RoomSessionSnapshot;
 import com.wirc.persistence.SchemaInspector;
-import com.wirc.persistence.entity.ChatRoomEntity;
-import com.wirc.persistence.entity.RoomSessionStateEntity;
-import com.wirc.persistence.repository.ChatMessageRepository;
-import com.wirc.persistence.repository.ChatRoomRepository;
-import com.wirc.persistence.repository.RoomSessionStateRepository;
+import com.wirc.entity.ChatRoomEntity;
+import com.wirc.entity.RoomSessionStateEntity;
+import com.wirc.repository.ChatMessageRepository;
+import com.wirc.repository.ChatRoomRepository;
+import com.wirc.repository.RoomSessionStateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

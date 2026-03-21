@@ -1,6 +1,6 @@
-package com.wirc.persistence.repository;
+package com.wirc.repository;
 
-import com.wirc.persistence.entity.ChatMessageEntity;
+import com.wirc.entity.ChatMessageEntity;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

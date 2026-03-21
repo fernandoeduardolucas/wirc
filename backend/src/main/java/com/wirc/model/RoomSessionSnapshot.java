@@ -1,6 +1,4 @@
-package com.wirc.persistence;
-
-import com.wirc.model.ChatMessage;
+package com.wirc.model;
 
 import java.util.List;
 

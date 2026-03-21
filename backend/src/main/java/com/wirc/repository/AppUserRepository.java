@@ -1,6 +1,6 @@
-package com.wirc.persistence.repository;
+package com.wirc.repository;
 
-import com.wirc.persistence.entity.AppUserEntity;
+import com.wirc.entity.AppUserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.wirc.validation;
 
-import com.wirc.service.ChatCommand;
+import com.wirc.model.ChatCommand;
 import com.wirc.service.RoomSession;
 import lombok.RequiredArgsConstructor;
 

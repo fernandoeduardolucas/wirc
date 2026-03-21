@@ -1,14 +1,9 @@
 package com.wirc.service;
 
 import com.wirc.bootstrap.DatabaseChatRoomLoader;
-import com.wirc.model.AppUser;
-import com.wirc.model.ChatMessage;
-import com.wirc.model.ChatNotification;
-import com.wirc.model.ChatRoom;
-import com.wirc.model.RoomStats;
-import com.wirc.model.UserMessageCount;
+import com.wirc.model.*;
 import com.wirc.persistence.DatabaseChatStateStore;
-import com.wirc.persistence.repository.AppUserRepository;
+import com.wirc.repository.AppUserRepository;
 import com.wirc.validation.MessageLengthValidationHandler;
 import com.wirc.validation.MessageValidationHandler;
 import com.wirc.validation.ParticipantValidationHandler;
@@ -29,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
+
 public class ChatApplicationFacade {
     private final Map<String, RoomSession> rooms = new ConcurrentHashMap<>();
     private final WebSocketNotificationGateway notificationGateway;

@@ -1,4 +1,4 @@
-package com.wirc.persistence.entity;
+package com.wirc.entity;
 
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class ChatRoomMemberEntity {
+
     @EmbeddedId
     private ChatRoomMemberId id;
 

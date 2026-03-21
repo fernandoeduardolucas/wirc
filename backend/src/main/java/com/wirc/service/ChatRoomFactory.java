@@ -1,6 +1,6 @@
 package com.wirc.service;
 
-import com.wirc.persistence.RoomSessionSnapshot;
+import com.wirc.model.RoomSessionSnapshot;
 import com.wirc.state.FocusedRoomState;
 import com.wirc.state.NotifiedRoomState;
 import com.wirc.state.RoomState;

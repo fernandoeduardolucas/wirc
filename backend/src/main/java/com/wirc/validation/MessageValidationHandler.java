@@ -1,6 +1,6 @@
 package com.wirc.validation;
 
-import com.wirc.service.ChatCommand;
+import com.wirc.model.ChatCommand;
 
 public abstract class MessageValidationHandler {
     private MessageValidationHandler next;

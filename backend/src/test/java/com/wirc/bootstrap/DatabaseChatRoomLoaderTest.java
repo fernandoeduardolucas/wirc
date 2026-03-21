@@ -1,13 +1,13 @@
 package com.wirc.bootstrap;
 
-import com.wirc.persistence.RoomSessionSnapshot;
+import com.wirc.model.RoomSessionSnapshot;
 import com.wirc.persistence.SchemaInspector;
-import com.wirc.persistence.entity.AppUserEntity;
-import com.wirc.persistence.entity.ChatRoomEntity;
-import com.wirc.persistence.entity.ChatRoomMemberEntity;
-import com.wirc.persistence.repository.ChatMessageRepository;
-import com.wirc.persistence.repository.ChatRoomRepository;
-import com.wirc.persistence.repository.RoomSessionStateRepository;
+import com.wirc.entity.AppUserEntity;
+import com.wirc.entity.ChatRoomEntity;
+import com.wirc.entity.ChatRoomMemberEntity;
+import com.wirc.repository.ChatMessageRepository;
+import com.wirc.repository.ChatRoomRepository;
+import com.wirc.repository.RoomSessionStateRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashSet;

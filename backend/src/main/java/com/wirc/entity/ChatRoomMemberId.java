@@ -1,4 +1,4 @@
-package com.wirc.persistence.entity;
+package com.wirc.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -16,6 +16,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class ChatRoomMemberId implements Serializable {
+
     @Column(name = "room_id", nullable = false, length = 100)
     private String roomId;
 

@@ -1,6 +1,6 @@
-package com.wirc.persistence.repository;
+package com.wirc.repository;
 
-import com.wirc.persistence.entity.ChatRoomEntity;
+import com.wirc.entity.ChatRoomEntity;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
