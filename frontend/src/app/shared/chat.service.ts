@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, defer, from } from 'rxjs';
+import { Observable, defer, from, of } from 'rxjs';
 import { AppError, AppUser, ChatMessage, ChatNotification, ChatRoom, RoomStats, UserMessageCount } from './chat.types';
 
 interface GraphqlResponse<T> {
@@ -17,12 +17,29 @@ interface GraphqlResponse<T> {
 export class ChatService {
   private readonly endpoint = 'http://localhost:8080/graphql';
   private readonly websocketEndpoint = 'ws://localhost:8080/ws/chat';
+  loadUsers(activeUser: string): Observable<AppUser[]> {
+    if (!activeUser) {
+      return of([]);
+    }
+    return defer(() => from(this.runQuery<{ users: AppUser[] }>('query { users { username displayName } }').then((r) => r.data?.users ?? [])));
+  }
 
-  loadUsers(): Observable<AppUser[]> {
-    return defer(() => from(this.runQuery<{ users: AppUser[] }>('query { users { username displayName passwordHint } }').then((r) => r.data?.users ?? [])));
+  signIn(user: string, password: string): Observable<AppUser> {
+    return defer(() => from(this.runQuery<{ signIn: AppUser }>(
+      'mutation($user: String!, $password: String!) { signIn(user: $user, password: $password) { username displayName } }',
+      { user, password }
+    ).then((r) => {
+      if (!r.data?.signIn) {
+        throw this.createError('Resposta GraphQL inválida para signIn.');
+      }
+      return r.data.signIn;
+    })));
   }
 
   loadRooms(activeUser: string): Observable<ChatRoom[]> {
+    if (!activeUser) {
+      return of([]);
+    }
     return defer(() => from(this.runQuery<{ rooms: ChatRoom[] }>(
       'query($activeUser: String!) { rooms(activeUser: $activeUser) { id name participants state unreadMessages canManageMembers } }',
       { activeUser }
@@ -30,6 +47,9 @@ export class ChatService {
   }
 
   loadMessages(roomId: string): Observable<ChatMessage[]> {
+    if (!roomId) {
+      return of([]);
+    }
     return defer(() => from(this.runQuery<{ messagesByRoom: ChatMessage[] }>(
       'query($roomId: String!) { messagesByRoom(roomId: $roomId) { id roomId user message sentAt highlighted } }',
       { roomId }
@@ -55,7 +75,10 @@ export class ChatService {
     })));
   }
 
-  loadTopUsers(): Observable<UserMessageCount[]> {
+  loadTopUsers(activeUser: string): Observable<UserMessageCount[]> {
+    if (!activeUser) {
+      return of([]);
+    }
     return defer(() => from(this.runQuery<{ topUsers: UserMessageCount[] }>('query { topUsers { user totalMessages } }').then((r) => r.data?.topUsers ?? [])));
   }
 

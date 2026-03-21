@@ -20,8 +20,12 @@ public class AppUserEntity {
     @Column(name = "display_name", nullable = false, length = 150)
     private String displayName;
 
-    public AppUserEntity(String username, String displayName) {
+    @Column(name = "password", nullable = false, length = 255)
+    private String password;
+
+    public AppUserEntity(String username, String displayName, String password) {
         this.username = username;
         this.displayName = displayName;
+        this.password = password;
     }
 }

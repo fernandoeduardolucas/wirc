@@ -69,8 +69,13 @@ public class ChatApplicationFacade {
 
     public List<AppUser> users() {
         return loadUsersByUsername().values().stream()
-                .map(user -> new AppUser(user.getUsername(), user.getDisplayName(), user.getDisplayName()))
+                .map(user -> new AppUser(user.getUsername(), user.getDisplayName()))
                 .toList();
+    }
+
+    public AppUser signIn(String user, String password) {
+        AppUserEntity authenticatedUser = authenticate(user, password);
+        return new AppUser(authenticatedUser.getUsername(), authenticatedUser.getDisplayName());
     }
 
     public List<ChatRoom> rooms(String activeUser) {
@@ -166,7 +171,7 @@ public class ChatApplicationFacade {
 
     @Transactional
     public ChatRoom createRoom(String name, String activeUser, List<String> participants) {
-        AppUserEntity actor = authenticate(activeUser, activeUser);
+        AppUserEntity actor = resolveExistingUser(activeUser);
         String roomName = requireText(name, "Nome do canal obrigatório.");
         List<String> requestedParticipants = normalizeParticipantList(participants);
         LinkedHashMap<String, String> canonicalParticipants = new LinkedHashMap<>();
@@ -189,7 +194,7 @@ public class ChatApplicationFacade {
     @Transactional
     public ChatRoom addMemberToRoom(String roomId, String member, String activeUser) {
         RoomSession room = requireRoom(roomId);
-        AppUserEntity actor = authenticate(activeUser, activeUser);
+        AppUserEntity actor = resolveExistingUser(activeUser);
         if (!room.participants().contains(actor.getUsername())) {
             throw new IllegalArgumentException("Só membros do canal podem adicionar novos membros.");
         }
@@ -207,8 +212,9 @@ public class ChatApplicationFacade {
 
     private AppUserEntity authenticate(String user, String password) {
         AppUserEntity appUser = resolveExistingUser(user);
-        if (!appUser.getDisplayName().equals(password) && !appUser.getUsername().equalsIgnoreCase(password)) {
-            throw new IllegalArgumentException("Credenciais inválidas. Use user/password iguais ao utilizador.");
+        String normalizedPassword = password == null ? "" : password.trim();
+        if (!appUser.getPassword().equals(normalizedPassword)) {
+            throw new IllegalArgumentException("Credenciais inválidas.");
         }
         return appUser;
     }

@@ -43,7 +43,6 @@ export interface ChatNotification {
 export interface AppUser {
   username: string;
   displayName: string;
-  passwordHint: string;
 }
 
 export interface AppErrorDetails {

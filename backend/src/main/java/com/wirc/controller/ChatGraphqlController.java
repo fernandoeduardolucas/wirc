@@ -51,6 +51,11 @@ public class ChatGraphqlController {
     }
 
     @MutationMapping
+    public AppUser signIn(@Argument String user, @Argument String password) {
+        return chatFacade.signIn(user, password);
+    }
+
+    @MutationMapping
     public ChatMessage sendMessage(
             @Argument String roomId,
             @Argument String user,

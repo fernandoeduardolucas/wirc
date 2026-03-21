@@ -20,3 +20,10 @@ databaseChangeLog:
         - sqlFile:
             path: db/changelog/003-create-chat-session-and-message-tables.sql
             relativeToChangelogFile: false
+  - changeSet:
+      id: 004-add-user-password-column
+      author: codex
+      changes:
+        - sqlFile:
+            path: db/changelog/004-add-user-password-column.sql
+            relativeToChangelogFile: false
