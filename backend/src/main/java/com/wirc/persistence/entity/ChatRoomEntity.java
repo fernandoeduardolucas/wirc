@@ -6,12 +6,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "chat_room")
+@Getter
+@NoArgsConstructor
 public class ChatRoomEntity {
     @Id
     @Column(name = "id", nullable = false, length = 100)
@@ -22,16 +26,4 @@ public class ChatRoomEntity {
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ChatRoomMemberEntity> members = new LinkedHashSet<>();
-
-    public String getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public Set<ChatRoomMemberEntity> getMembers() {
-        return members;
-    }
 }

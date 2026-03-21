@@ -7,9 +7,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "chat_room_member")
+@Getter
+@NoArgsConstructor
 public class ChatRoomMemberEntity {
     @EmbeddedId
     private ChatRoomMemberId id;
@@ -23,16 +27,4 @@ public class ChatRoomMemberEntity {
     @MapsId("username")
     @JoinColumn(name = "username", nullable = false)
     private AppUserEntity user;
-
-    public ChatRoomMemberId getId() {
-        return id;
-    }
-
-    public ChatRoomEntity getRoom() {
-        return room;
-    }
-
-    public AppUserEntity getUser() {
-        return user;
-    }
 }
