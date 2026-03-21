@@ -27,3 +27,10 @@ databaseChangeLog:
         - sqlFile:
             path: db/changelog/004-add-user-password-column.sql
             relativeToChangelogFile: false
+  - changeSet:
+      id: 005-populate-user-password-column
+      author: codex
+      changes:
+        - sqlFile:
+            path: db/changelog/005-populate-user-password-column.sql
+            relativeToChangelogFile: false
