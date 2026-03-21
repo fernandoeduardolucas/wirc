@@ -1,4 +1,4 @@
-package com.wirc.backend.graphql;
+package com.wirc.graphql;
 
 public record GraphqlChatMessage(String user, String message) {
 }

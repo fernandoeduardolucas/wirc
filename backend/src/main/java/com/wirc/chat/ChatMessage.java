@@ -1,4 +1,4 @@
-package com.wirc.backend.chat;
+package com.wirc.chat;
 
 public record ChatMessage(String user, String message) {
 }

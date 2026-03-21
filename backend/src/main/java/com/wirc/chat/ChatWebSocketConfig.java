@@ -1,4 +1,4 @@
-package com.wirc.backend.chat;
+package com.wirc.chat;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
