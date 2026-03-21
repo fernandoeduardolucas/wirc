@@ -35,10 +35,11 @@ class BackendApplicationTests {
     }
 
     @Test
-    void sendsMessageAndPersistsState() throws Exception {
+    void sendsMessageUsingDisplayNameByPersistingCanonicalUsername() {
         chatApplicationFacade.sendMessage(new ChatCommand("room-equipa", "Ana", "Olá websocket", false));
-        Path stateFile = Path.of("target/test-state/chat-state.json");
-        assertThat(Files.exists(stateFile)).isTrue();
-        assertThat(Files.readString(stateFile)).contains("Olá websocket");
+
+        assertThat(chatApplicationFacade.messagesByRoom("room-equipa"))
+                .extracting(message -> message.user() + ":" + message.message())
+                .contains("ana:Olá websocket");
     }
 }
