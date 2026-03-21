@@ -1,26 +1,31 @@
-<aside class="people-panel card nested-panel" *ngIf="room">
-  <div class="section-title compact-title">
-    <h3>Canal</h3>
-    <span class="muted">{{ room.participants.length }} users</span>
-  </div>
+@if (room) {
+  <aside class="people-panel card nested-panel">
+    <div class="section-title compact-title">
+      <h3>Canal</h3>
+      <span class="muted">{{ room.participants.length }} users</span>
+    </div>
 
-  <div class="participant-list">
-    <button
-      *ngFor="let participant of room.participants"
-      class="list-chip"
-      [class.active]="participant === currentUser"
-      (click)="userSelected.emit(participant)"
-    >
-      {{ participant }}
-    </button>
-  </div>
+    <div class="participant-list">
+      @for (participant of room.participants; track participant) {
+        <button
+          class="list-chip"
+          [class.active]="participant === currentUser"
+          (click)="userSelected.emit(participant)"
+        >
+          {{ participant }}
+        </button>
+      }
+    </div>
 
-  <div class="card mini-stats">
-    <h3>Top utilizadores</h3>
-    <ol>
-      <li *ngFor="let userStat of topUsers">
-        {{ userStat.user }} — {{ userStat.totalMessages }} msgs
-      </li>
-    </ol>
-  </div>
-</aside>
+    <div class="card mini-stats">
+      <h3>Top utilizadores</h3>
+      <ol>
+        @for (userStat of topUsers; track userStat.user) {
+          <li>
+            {{ userStat.user }} — {{ userStat.totalMessages }} msgs
+          </li>
+        }
+      </ol>
+    </div>
+  </aside>
+}

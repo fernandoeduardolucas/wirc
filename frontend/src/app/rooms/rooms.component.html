@@ -4,16 +4,19 @@
     <span class="muted">{{ rooms.length }} abertas</span>
   </div>
 
-  <button
-    *ngFor="let room of rooms"
-    class="room-entry"
-    [class.active]="room.id === activeRoomId"
-    (click)="roomSelected.emit(room.id)"
-  >
-    <div>
-      <strong>{{ room.name }}</strong>
-      <small>{{ room.participants.join(', ') || 'Sem participantes' }}</small>
-    </div>
-    <span class="badge" *ngIf="room.unreadMessages > 0">{{ room.unreadMessages }}</span>
-  </button>
+  @for (room of rooms; track room.id) {
+    <button
+      class="room-entry"
+      [class.active]="room.id === activeRoomId"
+      (click)="roomSelected.emit(room.id)"
+    >
+      <div>
+        <strong>{{ room.name }}</strong>
+        <small>{{ room.participants.join(', ') || 'Sem participantes' }}</small>
+      </div>
+      @if (room.unreadMessages > 0) {
+        <span class="badge">{{ room.unreadMessages }}</span>
+      }
+    </button>
+  }
 </section>

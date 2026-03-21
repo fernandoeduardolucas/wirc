@@ -8,13 +8,14 @@
   <div class="identity-current">{{ currentUser || 'Sem utilizador selecionado' }}</div>
 
   <div class="user-list-box">
-    <button
-      *ngFor="let user of users"
-      class="list-chip"
-      [class.active]="user.displayName === currentUser"
-      (click)="userSelected.emit(user.displayName)"
-    >
-      {{ user.displayName }}
-    </button>
+    @for (user of users; track user.displayName) {
+      <button
+        class="list-chip"
+        [class.active]="user.displayName === currentUser"
+        (click)="userSelected.emit(user.displayName)"
+      >
+        {{ user.displayName }}
+      </button>
+    }
   </div>
 </section>
