@@ -1,6 +1,8 @@
 package com.wirc;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wirc.model.ChatCommand;
+import com.wirc.model.ChatNotification;
 import com.wirc.service.ChatApplicationFacade;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import org.springframework.test.context.TestPropertySource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,6 +26,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BackendApplicationTests {
     @Autowired
     private ChatApplicationFacade chatApplicationFacade;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void clearStateFile() throws Exception {
@@ -41,5 +47,21 @@ class BackendApplicationTests {
         assertThat(chatApplicationFacade.messagesByRoom("room-equipa"))
                 .extracting(message -> message.user() + ":" + message.message())
                 .contains("ana:Olá websocket");
+    }
+
+    @Test
+    void serializesWebsocketNotificationInstants() throws Exception {
+        String payload = objectMapper.writeValueAsString(new ChatNotification(
+                "room-equipa",
+                "ana",
+                "Olá websocket",
+                Instant.parse("2026-03-21T12:00:00Z"),
+                "MESSAGE",
+                null,
+                null,
+                false
+        ));
+
+        assertThat(payload).contains("\"sentAt\":\"2026-03-21T12:00:00Z\"");
     }
 }
