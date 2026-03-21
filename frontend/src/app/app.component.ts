@@ -17,7 +17,7 @@ import { ChatRoom } from './shared/chat.types';
         <div class="brand card">
           <img
             class="brand-logo"
-            src="assets/wirc.png"
+            src="/src/assets/wirc.png"
             alt="WIRC logo"
           />
 
