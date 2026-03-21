@@ -14,12 +14,11 @@ import { ChatRoom } from './shared/chat.types';
   template: `
     <div class="shell" *ngIf="vm$ | async as vm">
       <aside class="sidebar-panel">
-        <div class="brand card mirc-logo">
-          <div class="brand-mark">😎</div>
+        <div class="brand card">
           <div>
             <p class="eyebrow">WIRC</p>
             <h1>Messenger Relay Chat</h1>
-            <p class="muted">Inspirado no mIRC, agora com identidade dinâmica via backend.</p>
+            <p class="muted">Chat com visual clássico e identidade inspirada no logo que enviaste.</p>
           </div>
         </div>
 
@@ -37,6 +36,20 @@ import { ChatRoom } from './shared/chat.types';
       </aside>
 
       <main class="workspace">
+        <section class="hero-banner card">
+          <div class="hero-copy">
+            <p class="eyebrow">Página principal</p>
+            <h2>Nova logo do WIRC</h2>
+            <p class="muted">Usei a referência que mandaste: o “m” azul virou um “w” e o boneco amarelo agora está com óculos de sol.</p>
+          </div>
+
+          <img
+            class="hero-logo"
+            src="assets/wirc-logo.svg"
+            alt="Logo do WIRC com W azul, irc laranja e boneco amarelo com óculos de sol"
+          />
+        </section>
+
         <app-chat
           [room]="activeRoom(vm.rooms, vm.activeRoomId)"
           [messages]="vm.messages"

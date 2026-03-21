@@ -49,29 +49,39 @@ select {
 }
 
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 14px;
   padding: 18px;
 }
 
-.brand-mark {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  font-size: 2rem;
-  font-weight: 700;
-  background: linear-gradient(180deg, #ffd34d, #ff8a00);
+.hero-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 22px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at right top, rgba(96, 165, 250, 0.18), transparent 35%),
+    linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.96));
 }
 
-.mirc-logo h1,
+.hero-copy {
+  max-width: 520px;
+}
+
+.hero-logo {
+  width: min(320px, 100%);
+  height: auto;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 20px 28px rgba(0, 0, 0, 0.32));
+}
+
 .section-title h2,
 .window-titlebar h2,
 .people-panel h3,
 .search-results h3,
-.mini-stats h3 {
+.mini-stats h3,
+.hero-banner h2,
+.brand h1 {
   margin: 0;
 }
 
@@ -271,5 +281,10 @@ button:hover {
   .shell,
   .chat-body {
     grid-template-columns: 1fr;
+  }
+
+  .hero-banner {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
