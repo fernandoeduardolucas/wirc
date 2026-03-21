@@ -17,7 +17,7 @@ import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
-public class ChatGraphqlController {
+public class WircController {
     private final ChatApplicationFacade chatFacade;
 
     @QueryMapping
