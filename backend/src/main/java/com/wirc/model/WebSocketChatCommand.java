@@ -1,4 +1,4 @@
-package com.wirc.websocket;
+package com.wirc.model;
 
 public record WebSocketChatCommand(
         String type,

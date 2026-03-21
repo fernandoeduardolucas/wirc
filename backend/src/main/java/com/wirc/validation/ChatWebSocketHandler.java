@@ -1,9 +1,12 @@
-package com.wirc.websocket;
+package com.wirc.validation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wirc.model.ChatCommand;
 import com.wirc.service.ChatApplicationFacade;
+import com.wirc.model.WebSocketChatCommand;
+import com.wirc.websocket.WebSocketNotificationGateway;
+import com.wirc.model.WebSocketServerMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

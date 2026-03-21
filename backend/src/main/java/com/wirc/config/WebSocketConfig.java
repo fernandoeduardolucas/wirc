@@ -1,6 +1,6 @@
 package com.wirc.config;
 
-import com.wirc.websocket.ChatWebSocketHandler;
+import com.wirc.validation.ChatWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
