@@ -1,9 +1,11 @@
 package com.wirc.validation;
 
+import com.wirc.exception.ChatValidationException;
 import com.wirc.model.ChatCommand;
 import com.wirc.service.RoomSession;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 
 @RequiredArgsConstructor
@@ -14,10 +16,20 @@ public class ParticipantValidationHandler extends MessageValidationHandler {
     protected void check(ChatCommand command) {
         RoomSession room = rooms.get(command.roomId());
         if (room == null) {
-            throw new IllegalArgumentException("Sala não encontrada.");
+            throw new ChatValidationException(
+                    "ROOM_NOT_FOUND",
+                    "Sala não encontrada.",
+                    Map.of("roomId", command.roomId()));
         }
         if (!room.participants().contains(command.user())) {
-            throw new IllegalArgumentException("O utilizador não pertence à sala selecionada.");
+            throw new ChatValidationException(
+                    "USER_NOT_IN_ROOM",
+                    "O utilizador selecionado não pertence a esta sala.",
+                    Map.of(
+                            "roomId", room.id(),
+                            "roomName", room.name(),
+                            "user", command.user(),
+                            "participants", List.copyOf(room.participants())));
         }
     }
 }

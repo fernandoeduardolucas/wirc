@@ -2,7 +2,7 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, EMPTY, Subject, combineLatest } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { ChatService } from './chat.service';
-import { AppUser, ChatMessage, ChatNotification, ChatRoom, RoomStats, UserMessageCount } from './chat.types';
+import { AppError, AppUser, ChatMessage, ChatNotification, ChatRoom, RoomStats, UserMessageCount } from './chat.types';
 
 @Injectable({ providedIn: 'root' })
 export class ChatStore implements OnDestroy {
@@ -15,7 +15,7 @@ export class ChatStore implements OnDestroy {
   private readonly roomStatsSubject = new BehaviorSubject<RoomStats | null>(null);
   private readonly topUsersSubject = new BehaviorSubject<UserMessageCount[]>([]);
   private readonly notificationSubject = new BehaviorSubject<string>('');
-  private readonly errorSubject = new BehaviorSubject<string>('');
+  private readonly errorSubject = new BehaviorSubject<AppError | null>(null);
   private readonly destroy$ = new Subject<void>();
   private socket?: WebSocket;
 
@@ -98,6 +98,7 @@ export class ChatStore implements OnDestroy {
 
   selectRoom(roomId: string): void {
     this.notificationSubject.next('');
+    this.errorSubject.next(null);
     this.activeRoomIdSubject.next(roomId);
   }
 
@@ -191,7 +192,15 @@ export class ChatStore implements OnDestroy {
   }
 
   private handleError<T>(error: Error, fallback: T) {
-    this.errorSubject.next(error.message);
+    this.errorSubject.next(this.toAppError(error));
     return new BehaviorSubject(fallback);
+  }
+
+  private toAppError(error: Error | AppError): AppError {
+    if ('code' in error || 'details' in error) {
+      return error as AppError;
+    }
+
+    return { message: error.message };
   }
 }

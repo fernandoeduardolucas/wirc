@@ -71,7 +71,7 @@ public class DatabaseChatRoomLoader {
             RoomSessionStateEntity sessionState,
             List<ChatMessage> messages) {
         List<String> participants = room.getMembers().stream()
-                .map(member -> member.getUser().getDisplayName())
+                .map(member -> member.getUser().getUsername())
                 .sorted(Comparator.naturalOrder())
                 .toList();
 

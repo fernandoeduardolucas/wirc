@@ -1,7 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ChatMessage, ChatRoom, RoomStats } from '../shared/chat.types';
+import { AppError, ChatMessage, ChatRoom, RoomStats } from '../shared/chat.types';
 import { CanalComponent } from '../canal/canal.component';
 import { UserMessageCount } from '../shared/chat.types';
 
@@ -20,7 +20,7 @@ export class ChatComponent {
   @Input() topUsers: UserMessageCount[] = [];
   @Input() currentUser = '';
   @Input() notification = '';
-  @Input() error = '';
+  @Input() error: AppError | null = null;
   @Input() roomNameResolver: (roomId: string) => string = (roomId) => roomId;
   @Output() searchSubmitted = new EventEmitter<string>();
   @Output() messageSent = new EventEmitter<string>();

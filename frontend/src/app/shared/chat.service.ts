@@ -1,10 +1,16 @@
 import { Injectable } from '@angular/core';
 import { Observable, defer, from } from 'rxjs';
-import { AppUser, ChatMessage, ChatNotification, ChatRoom, RoomStats, UserMessageCount } from './chat.types';
+import { AppError, AppUser, ChatMessage, ChatNotification, ChatRoom, RoomStats, UserMessageCount } from './chat.types';
 
 interface GraphqlResponse<T> {
   data?: T;
-  errors?: Array<{ message: string }>;
+  errors?: Array<{
+    message: string;
+    extensions?: {
+      code?: string;
+      details?: AppError['details'];
+    };
+  }>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -40,7 +46,7 @@ export class ChatService {
       { roomId }
     ).then((r) => {
       if (!r.data?.roomStats) {
-        throw new Error('Resposta GraphQL inválida para roomStats.');
+        throw this.createError('Resposta GraphQL inválida para roomStats.');
       }
       return r.data.roomStats;
     })));
@@ -56,7 +62,7 @@ export class ChatService {
       { roomId, user, message, focusedRoom }
     ).then((r) => {
       if (!r.data?.sendMessage) {
-        throw new Error('Resposta GraphQL inválida para sendMessage.');
+        throw this.createError('Resposta GraphQL inválida para sendMessage.');
       }
       return r.data.sendMessage;
     })));
@@ -68,7 +74,7 @@ export class ChatService {
       { roomId }
     ).then((r) => {
       if (!r.data?.focusRoom) {
-        throw new Error('Resposta GraphQL inválida para focusRoom.');
+        throw this.createError('Resposta GraphQL inválida para focusRoom.');
       }
       return r.data.focusRoom;
     })));
@@ -88,13 +94,18 @@ export class ChatService {
     });
 
     if (!raw.ok) {
-      throw new Error(`Falha HTTP ${raw.status}: ${raw.statusText}`);
+      throw this.createError(`Falha HTTP ${raw.status}: ${raw.statusText}`);
     }
 
     const payload = (await raw.json()) as GraphqlResponse<T>;
     if (payload.errors?.length) {
-      throw new Error(payload.errors[0].message);
+      const firstError = payload.errors[0];
+      throw this.createError(firstError.message, firstError.extensions?.code, firstError.extensions?.details);
     }
     return payload;
+  }
+
+  private createError(message: string, code?: string, details?: AppError['details']): AppError {
+    return { message, code, details };
   }
 }
