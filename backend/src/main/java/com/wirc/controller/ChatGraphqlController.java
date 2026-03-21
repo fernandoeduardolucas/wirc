@@ -1,5 +1,6 @@
-package com.wirc.graphql;
+package com.wirc.controller;
 
+import com.wirc.dto.GraphqlChatMessage;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
