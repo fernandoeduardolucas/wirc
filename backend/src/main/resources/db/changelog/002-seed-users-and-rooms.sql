@@ -1,9 +1,9 @@
-INSERT INTO app_user (username, display_name, password) VALUES
-    ('ana', 'Ana', 'Ana'),
-    ('bruno', 'Bruno', 'Bruno'),
-    ('carla', 'Carla', 'Carla'),
-    ('diogo', 'Diogo', 'Diogo'),
-    ('eva', 'Eva', 'Eva');
+INSERT INTO app_user (username, display_name) VALUES
+    ('ana', 'Ana'),
+    ('bruno', 'Bruno'),
+    ('carla', 'Carla'),
+    ('diogo', 'Diogo'),
+    ('eva', 'Eva');
 
 INSERT INTO chat_room (id, name) VALUES
     ('room-ana-bruno', 'Ana & Bruno'),
