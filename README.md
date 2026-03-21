@@ -1,9 +1,29 @@
-# WIRC - Chat simples com Spring Boot + Angular 20 + GraphQL
+# WIRC - Chat multi-salas com Spring Boot + Angular 20 + GraphQL + WebSockets
 
-Este exemplo sobe backend e frontend ao mesmo tempo:
+Aplicação de chat com várias salas, notificações em tempo real e estatísticas de utilização.
 
-- Backend Spring Boot com endpoint GraphQL em `http://localhost:8080/graphql`
-- Frontend Angular 20 em `http://localhost:4200`
+## Funcionalidades
+
+- Salas de chat múltiplas com participantes diferentes.
+- Envio de mensagens via GraphQL.
+- Listagem de salas, mensagens, pesquisa textual, estatísticas por sala e top 3 utilizadores via GraphQL.
+- Notificações instantâneas de mensagens em salas não focadas via WebSocket.
+- Uso explícito dos padrões **Facade**, **Chain of Responsibility**, **State** e **Factory**, identificados com comentários no código.
+
+## Arquitetura
+
+- **Backend**: Spring Boot 4, GraphQL e WebSocket.
+- **Frontend**: Angular 20 standalone.
+- **Comunicação**:
+  - GraphQL em `http://localhost:8080/graphql`
+  - WebSocket em `ws://localhost:8080/ws/chat`
+
+## Design Patterns usados
+
+- **Facade**: `ChatApplicationFacade` concentra a lógica da aplicação.
+- **Chain of Responsibility**: cadeia de validação antes de enviar mensagens.
+- **State**: salas alternam entre `FOCUSED` e `NOTIFIED` consoante foco/notificações.
+- **Factory**: `ChatRoomFactory` cria salas iniciais de forma uniforme.
 
 ## Rodar tudo junto (Linux/macOS)
 
@@ -19,14 +39,14 @@ start-all.bat
 
 ## Rodar separado
 
-Backend:
+### Backend
 
 ```bash
 cd backend
 ./mvnw spring-boot:run
 ```
 
-Frontend (Angular 20):
+### Frontend
 
 ```bash
 cd frontend
@@ -34,13 +54,34 @@ npm install
 npm start
 ```
 
-## Exemplo de query GraphQL
+## Exemplos GraphQL
+
+### Listar salas
 
 ```graphql
 query {
-  messages {
+  rooms {
+    id
+    name
+    state
+    unreadMessages
+  }
+}
+```
+
+### Enviar mensagem
+
+```graphql
+mutation {
+  sendMessage(
+    roomId: "room-equipa"
+    user: "Ana"
+    message: "Vamos validar GraphQL e WebSocket hoje"
+    focusedRoom: true
+  ) {
     user
     message
+    highlighted
   }
 }
 ```

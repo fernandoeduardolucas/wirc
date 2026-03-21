@@ -1,8 +1,41 @@
 import { Injectable } from '@angular/core';
 
+export interface ChatRoom {
+  id: string;
+  name: string;
+  participants: string[];
+  state: string;
+  unreadMessages: number;
+}
+
 export interface ChatMessage {
+  id: string;
+  roomId: string;
   user: string;
   message: string;
+  sentAt: string;
+  highlighted: boolean;
+}
+
+export interface RoomStats {
+  roomId: string;
+  roomName: string;
+  totalMessages: number;
+  highlightedMessages: number;
+  busiestUser: string;
+}
+
+export interface UserMessageCount {
+  user: string;
+  totalMessages: number;
+}
+
+export interface ChatNotification {
+  roomId?: string;
+  roomName?: string;
+  preview: string;
+  user?: string;
+  type: string;
 }
 
 interface GraphqlResponse<T> {
@@ -13,18 +46,55 @@ interface GraphqlResponse<T> {
 @Injectable({ providedIn: 'root' })
 export class ChatController {
   private readonly endpoint = 'http://localhost:8080/graphql';
+  private readonly websocketEndpoint = 'ws://localhost:8080/ws/chat';
 
-  async loadMessages(): Promise<ChatMessage[]> {
-    const response = await this.runQuery<{ messages: ChatMessage[] }>(
-      'query { messages { user message } }'
+  async loadRooms(): Promise<ChatRoom[]> {
+    const response = await this.runQuery<{ rooms: ChatRoom[] }>(
+      'query { rooms { id name participants state unreadMessages } }'
     );
-    return response.data?.messages ?? [];
+    return response.data?.rooms ?? [];
   }
 
-  async sendMessage(user: string, message: string): Promise<ChatMessage> {
+  async loadMessages(roomId: string): Promise<ChatMessage[]> {
+    const response = await this.runQuery<{ messagesByRoom: ChatMessage[] }>(
+      'query($roomId: String!) { messagesByRoom(roomId: $roomId) { id roomId user message sentAt highlighted } }',
+      { roomId }
+    );
+    return response.data?.messagesByRoom ?? [];
+  }
+
+  async searchMessages(term: string): Promise<ChatMessage[]> {
+    const response = await this.runQuery<{ searchMessages: ChatMessage[] }>(
+      'query($term: String!) { searchMessages(term: $term) { id roomId user message sentAt highlighted } }',
+      { term }
+    );
+    return response.data?.searchMessages ?? [];
+  }
+
+  async loadRoomStats(roomId: string): Promise<RoomStats> {
+    const response = await this.runQuery<{ roomStats: RoomStats }>(
+      'query($roomId: String!) { roomStats(roomId: $roomId) { roomId roomName totalMessages highlightedMessages busiestUser } }',
+      { roomId }
+    );
+
+    if (!response.data?.roomStats) {
+      throw new Error('Resposta GraphQL inválida para roomStats.');
+    }
+
+    return response.data.roomStats;
+  }
+
+  async loadTopUsers(): Promise<UserMessageCount[]> {
+    const response = await this.runQuery<{ topUsers: UserMessageCount[] }>(
+      'query { topUsers { user totalMessages } }'
+    );
+    return response.data?.topUsers ?? [];
+  }
+
+  async sendMessage(roomId: string, user: string, message: string, focusedRoom: boolean): Promise<ChatMessage> {
     const response = await this.runQuery<{ sendMessage: ChatMessage }>(
-      'mutation($user: String!, $message: String!) { sendMessage(user: $user, message: $message) { user message } }',
-      { user, message }
+      'mutation($roomId: String!, $user: String!, $message: String!, $focusedRoom: Boolean!) { sendMessage(roomId: $roomId, user: $user, message: $message, focusedRoom: $focusedRoom) { id roomId user message sentAt highlighted } }',
+      { roomId, user, message, focusedRoom }
     );
 
     if (!response.data?.sendMessage) {
@@ -34,7 +104,28 @@ export class ChatController {
     return response.data.sendMessage;
   }
 
-  private async runQuery<T>(query: string, variables: Record<string, string> = {}): Promise<GraphqlResponse<T>> {
+  async focusRoom(roomId: string): Promise<ChatRoom> {
+    const response = await this.runQuery<{ focusRoom: ChatRoom }>(
+      'mutation($roomId: String!) { focusRoom(roomId: $roomId) { id name participants state unreadMessages } }',
+      { roomId }
+    );
+
+    if (!response.data?.focusRoom) {
+      throw new Error('Resposta GraphQL inválida para focusRoom.');
+    }
+
+    return response.data.focusRoom;
+  }
+
+  connectNotifications(onNotification: (notification: ChatNotification) => void): WebSocket {
+    const socket = new WebSocket(this.websocketEndpoint);
+    socket.onmessage = (event) => {
+      onNotification(JSON.parse(event.data) as ChatNotification);
+    };
+    return socket;
+  }
+
+  private async runQuery<T>(query: string, variables: Record<string, string | boolean> = {}): Promise<GraphqlResponse<T>> {
     const raw = await fetch(this.endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

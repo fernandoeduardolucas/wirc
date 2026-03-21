@@ -1,12 +1,42 @@
 type Query {
-  messages: [ChatMessage!]!
+  rooms: [ChatRoom!]!
+  messagesByRoom(roomId: String!): [ChatMessage!]!
+  searchMessages(term: String!): [ChatMessage!]!
+  roomStats(roomId: String!): RoomStats!
+  topUsers: [UserMessageCount!]!
 }
 
 type Mutation {
-  sendMessage(user: String!, message: String!): ChatMessage!
+  sendMessage(roomId: String!, user: String!, message: String!, focusedRoom: Boolean!): ChatMessage!
+  focusRoom(roomId: String!): ChatRoom!
+}
+
+type ChatRoom {
+  id: String!
+  name: String!
+  participants: [String!]!
+  state: String!
+  unreadMessages: Int!
 }
 
 type ChatMessage {
+  id: String!
+  roomId: String!
   user: String!
   message: String!
+  sentAt: String!
+  highlighted: Boolean!
+}
+
+type RoomStats {
+  roomId: String!
+  roomName: String!
+  totalMessages: Int!
+  highlightedMessages: Int!
+  busiestUser: String!
+}
+
+type UserMessageCount {
+  user: String!
+  totalMessages: Int!
 }
