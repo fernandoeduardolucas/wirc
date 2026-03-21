@@ -6,7 +6,7 @@ import com.wirc.model.ChatNotification;
 import com.wirc.model.ChatRoom;
 import com.wirc.model.RoomStats;
 import com.wirc.model.UserMessageCount;
-import com.wirc.persistence.ChatStateStore;
+import com.wirc.persistence.DatabaseChatStateStore;
 import com.wirc.validation.MessageLengthValidationHandler;
 import com.wirc.validation.MessageValidationHandler;
 import com.wirc.validation.ParticipantValidationHandler;
@@ -30,13 +30,13 @@ public class ChatApplicationFacade {
     private final Map<String, RoomSession> rooms = new ConcurrentHashMap<>();
     private final WebSocketNotificationGateway notificationGateway;
     private final MessageValidationHandler validationChain;
-    private final ChatStateStore chatStateStore;
+    private final DatabaseChatStateStore chatStateStore;
 
     public ChatApplicationFacade(
             ChatRoomFactory roomFactory,
             DatabaseChatRoomLoader databaseChatRoomLoader,
             WebSocketNotificationGateway notificationGateway,
-            ChatStateStore chatStateStore) {
+            DatabaseChatStateStore chatStateStore) {
         this.notificationGateway = notificationGateway;
         this.chatStateStore = chatStateStore;
         loadRooms(roomFactory, databaseChatRoomLoader);
@@ -44,13 +44,11 @@ public class ChatApplicationFacade {
     }
 
     private void loadRooms(ChatRoomFactory roomFactory, DatabaseChatRoomLoader databaseChatRoomLoader) {
-        chatStateStore.load().ifPresentOrElse(
-                snapshots -> snapshots.forEach(snapshot -> rooms.put(snapshot.id(), roomFactory.createFromSnapshot(snapshot))),
-                () -> databaseChatRoomLoader.loadRooms().forEach(seed -> rooms.put(seed.id(), roomFactory.create(seed))));
+        databaseChatRoomLoader.loadRooms()
+                .forEach(snapshot -> rooms.put(snapshot.id(), roomFactory.createFromSnapshot(snapshot)));
     }
 
     private MessageValidationHandler buildValidationChain() {
-        // Design Pattern: Chain of Responsibility -> cada handler valida uma regra antes do envio.
         MessageValidationHandler required = new RequiredFieldValidationHandler();
         required
                 .linkWith(new ParticipantValidationHandler(rooms))
@@ -58,7 +56,6 @@ public class ChatApplicationFacade {
         return required;
     }
 
-    // Design Pattern: Facade -> expõe uma API única para GraphQL/controllers consumirem sem conhecer a lógica interna.
     public List<ChatRoom> rooms() {
         return rooms.values().stream()
                 .sorted(Comparator.comparing(RoomSession::name))
@@ -93,7 +90,7 @@ public class ChatApplicationFacade {
                 highlighted);
 
         room.messages().add(chatMessage);
-        room.state().onMessageSent(room, command.focusedRoom()); // Design Pattern: State -> o comportamento muda conforme o estado atual da sala.
+        room.state().onMessageSent(room, command.focusedRoom());
         persistState();
 
         if (!command.focusedRoom()) {
@@ -111,7 +108,7 @@ public class ChatApplicationFacade {
 
     public ChatRoom focusRoom(String roomId) {
         RoomSession room = requireRoom(roomId);
-        room.state().onRoomFocused(room); // Design Pattern: State -> focar a sala reseta notificações e pode mudar de estado.
+        room.state().onRoomFocused(room);
         persistState();
         return toChatRoom(room);
     }
