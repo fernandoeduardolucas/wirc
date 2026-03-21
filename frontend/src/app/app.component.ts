@@ -16,11 +16,7 @@ import { ChatRoom } from './shared/chat.types';
     <div class="shell">
       <aside class="sidebar-panel">
         <div class="brand card">
-          <img
-            class="brand-logo"
-            src="/src/assets/wirc.png"
-            alt="WIRC logo"
-          />
+          <img class="brand-logo" [src]="wircLogo" alt="WIRC logo" />
 
           <div>
             <p class="eyebrow">WIRC</p>
@@ -42,6 +38,14 @@ import { ChatRoom } from './shared/chat.types';
       </aside>
 
       <main class="workspace">
+        <section class="hero card">
+          <img class="hero-logo" [src]="wircLogo" alt="WIRC mascot" />
+          <div>
+            <p class="eyebrow">Welcome to WIRC</p>
+            <h2>Classic chat, front and center.</h2>
+          </div>
+        </section>
+
         <app-chat
           [room]="activeRoom(vm.rooms, vm.activeRoomId)"
           [messages]="vm.messages"
@@ -64,6 +68,7 @@ import { ChatRoom } from './shared/chat.types';
 export class AppComponent {
   readonly store = inject(ChatStore);
   readonly vm$ = this.store.vm$.pipe(map((vm) => ({ ...vm })));
+  readonly wircLogo = 'assets/wirc.png';
 
   activeRoom(rooms: ChatRoom[], activeRoomId: string): ChatRoom | undefined {
     return rooms.find((room) => room.id === activeRoomId);
