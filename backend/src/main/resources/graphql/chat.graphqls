@@ -1,4 +1,5 @@
 type Query {
+  users: [AppUser!]!
   rooms: [ChatRoom!]!
   messagesByRoom(roomId: String!): [ChatMessage!]!
   searchMessages(term: String!): [ChatMessage!]!
@@ -39,4 +40,10 @@ type RoomStats {
 type UserMessageCount {
   user: String!
   totalMessages: Int!
+}
+
+
+type AppUser {
+  username: String!
+  displayName: String!
 }

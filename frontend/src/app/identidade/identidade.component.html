@@ -1,0 +1,20 @@
+<section class="card section-stack">
+  <div class="section-title">
+    <h2>Identidade</h2>
+    <span class="status">online</span>
+  </div>
+
+  <p class="label">Utilizador ativo</p>
+  <div class="identity-current">{{ currentUser || 'Sem utilizador selecionado' }}</div>
+
+  <div class="user-list-box">
+    <button
+      *ngFor="let user of users"
+      class="list-chip"
+      [class.active]="user.displayName === currentUser"
+      (click)="userSelected.emit(user.displayName)"
+    >
+      {{ user.displayName }}
+    </button>
+  </div>
+</section>

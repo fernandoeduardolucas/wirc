@@ -1,0 +1,60 @@
+<section class="chat-window card" *ngIf="room as currentRoom">
+  <header class="window-titlebar">
+    <div class="title-dots">
+      <span></span><span></span><span></span>
+    </div>
+    <div>
+      <h2>{{ currentRoom.name }}</h2>
+      <p class="muted">{{ currentRoom.participants.length }} utilizadores ligados</p>
+    </div>
+    <div class="title-meta">{{ currentRoom.state }}</div>
+  </header>
+
+  <div class="toolbar card nested-toolbar">
+    <div>
+      <label class="label">Pesquisar no histórico</label>
+      <div class="inline-form">
+        <input [(ngModel)]="searchTerm" placeholder="texto a procurar..." (keydown.enter)="submitSearch()" />
+        <button (click)="submitSearch()">Pesquisar</button>
+      </div>
+    </div>
+    <div class="toolbar-stats" *ngIf="stats">
+      <span><strong>{{ stats.totalMessages }}</strong> msgs</span>
+      <span><strong>{{ stats.highlightedMessages }}</strong> destaque</span>
+      <span><strong>{{ stats.busiestUser }}</strong> ativo</span>
+    </div>
+  </div>
+
+  <div class="notification" *ngIf="notification">🔔 {{ notification }}</div>
+  <div class="error-banner" *ngIf="error">{{ error }}</div>
+
+  <div class="chat-body">
+    <section class="messages-panel">
+      <div class="search-results card nested-panel" *ngIf="searchResults.length > 0">
+        <h3>Resultados</h3>
+        <ul>
+          <li *ngFor="let result of searchResults">
+            <strong>{{ result.user }}</strong> em <em>{{ roomNameResolver(result.roomId) }}</em>: {{ result.message }}
+          </li>
+        </ul>
+      </div>
+
+      <ul class="messages">
+        <li *ngFor="let item of messages" [class.highlighted]="item.highlighted">
+          <div class="message-header">
+            <strong>{{ item.user }}</strong>
+            <small>{{ item.sentAt | date:'shortTime' }}</small>
+          </div>
+          <span>{{ item.message }}</span>
+        </li>
+      </ul>
+    </section>
+
+    <app-canal [room]="currentRoom" [currentUser]="currentUser" [topUsers]="topUsers" (userSelected)="userSelected.emit($event)" />
+  </div>
+
+  <footer class="composer-box">
+    <input [(ngModel)]="message" [placeholder]="'Escreva uma mensagem para ' + currentRoom.name" (keydown.enter)="submitMessage()" />
+    <button (click)="submitMessage()">Enviar</button>
+  </footer>
+</section>
