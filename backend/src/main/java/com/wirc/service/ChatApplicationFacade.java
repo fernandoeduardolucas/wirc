@@ -2,16 +2,20 @@ package com.wirc.service;
 
 import com.wirc.bootstrap.DatabaseChatRoomLoader;
 import com.wirc.entity.AppUserEntity;
+import com.wirc.entity.ChatRoomEntity;
 import com.wirc.model.*;
 import com.wirc.persistence.DatabaseChatStateStore;
 import com.wirc.repository.AppUserRepository;
+import com.wirc.repository.ChatRoomRepository;
 import com.wirc.validation.MessageLengthValidationHandler;
 import com.wirc.validation.MessageValidationHandler;
 import com.wirc.validation.ParticipantValidationHandler;
 import com.wirc.validation.RequiredFieldValidationHandler;
 import com.wirc.websocket.WebSocketNotificationGateway;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -21,29 +25,31 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.SequencedMap;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-
 public class ChatApplicationFacade {
     private final Map<String, RoomSession> rooms = new ConcurrentHashMap<>();
     private final WebSocketNotificationGateway notificationGateway;
     private final MessageValidationHandler validationChain;
     private final DatabaseChatStateStore chatStateStore;
     private final AppUserRepository appUserRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
     public ChatApplicationFacade(
             ChatRoomFactory roomFactory,
             DatabaseChatRoomLoader databaseChatRoomLoader,
             WebSocketNotificationGateway notificationGateway,
             DatabaseChatStateStore chatStateStore,
-            AppUserRepository appUserRepository) {
+            AppUserRepository appUserRepository,
+            ChatRoomRepository chatRoomRepository) {
         this.notificationGateway = notificationGateway;
         this.chatStateStore = chatStateStore;
         this.appUserRepository = appUserRepository;
+        this.chatRoomRepository = chatRoomRepository;
         loadRooms(roomFactory, databaseChatRoomLoader);
         this.validationChain = buildValidationChain();
     }
@@ -63,14 +69,15 @@ public class ChatApplicationFacade {
 
     public List<AppUser> users() {
         return loadUsersByUsername().values().stream()
-                .map(user -> new AppUser(user.getUsername(), user.getDisplayName()))
+                .map(user -> new AppUser(user.getUsername(), user.getDisplayName(), user.getDisplayName()))
                 .toList();
     }
 
-    public List<ChatRoom> rooms() {
+    public List<ChatRoom> rooms(String activeUser) {
+        String canonicalUser = resolveCanonicalUsername(activeUser).orElse("");
         return rooms.values().stream()
                 .sorted(Comparator.comparing(RoomSession::name))
-                .map(this::toChatRoom)
+                .map(room -> toChatRoom(room, canonicalUser))
                 .toList();
     }
 
@@ -125,11 +132,11 @@ public class ChatApplicationFacade {
         return chatMessage;
     }
 
-    public ChatRoom focusRoom(String roomId) {
+    public ChatRoom focusRoom(String roomId, String activeUser) {
         RoomSession room = requireRoom(roomId);
         room.state().onRoomFocused(room);
         persistState();
-        return toChatRoom(room);
+        return toChatRoom(room, resolveCanonicalUsername(activeUser).orElse(""));
     }
 
     public RoomStats roomStats(String roomId) {
@@ -157,14 +164,105 @@ public class ChatApplicationFacade {
                 .toList();
     }
 
-    private Optional<String> resolveCanonicalUsername(String user) {
-        return appUserRepository.findByUsernameIgnoreCase(user)
-                .map(existingUser -> existingUser.getUsername())
-                .or(() -> appUserRepository.findByDisplayNameIgnoreCase(user)
-                        .map(existingUser -> existingUser.getUsername()));
+    @Transactional
+    public ChatRoom createRoom(String name, String activeUser, List<String> participants) {
+        AppUserEntity actor = authenticate(activeUser, activeUser);
+        String roomName = requireText(name, "Nome do canal obrigatório.");
+        List<String> requestedParticipants = normalizeParticipantList(participants);
+        LinkedHashMap<String, String> canonicalParticipants = new LinkedHashMap<>();
+        canonicalParticipants.put(actor.getUsername(), actor.getUsername());
+        requestedParticipants.stream()
+                .map(this::resolveExistingUser)
+                .forEach(participant -> canonicalParticipants.put(participant.getUsername(), participant.getUsername()));
+
+        String roomId = nextRoomId(roomName);
+        ChatRoomEntity roomEntity = new ChatRoomEntity(roomId, roomName);
+        canonicalParticipants.values().forEach(username -> roomEntity.addMember(resolveExistingUser(username)));
+        chatRoomRepository.save(roomEntity);
+
+        RoomSession roomSession = new RoomSession(roomId, roomName, new com.wirc.state.FocusedRoomState(), new ArrayList<>(canonicalParticipants.values()));
+        rooms.put(roomId, roomSession);
+        persistState();
+        return toChatRoom(roomSession, actor.getUsername());
     }
 
-    private ChatRoom toChatRoom(RoomSession room) {
+    @Transactional
+    public ChatRoom addMemberToRoom(String roomId, String member, String activeUser) {
+        RoomSession room = requireRoom(roomId);
+        AppUserEntity actor = authenticate(activeUser, activeUser);
+        if (!room.participants().contains(actor.getUsername())) {
+            throw new IllegalArgumentException("Só membros do canal podem adicionar novos membros.");
+        }
+
+        AppUserEntity memberEntity = resolveExistingUser(member);
+        room.participants().add(memberEntity.getUsername());
+
+        ChatRoomEntity roomEntity = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Sala não encontrada: " + roomId));
+        roomEntity.addMember(memberEntity);
+        chatRoomRepository.save(roomEntity);
+        persistState();
+        return toChatRoom(room, actor.getUsername());
+    }
+
+    private AppUserEntity authenticate(String user, String password) {
+        AppUserEntity appUser = resolveExistingUser(user);
+        if (!appUser.getDisplayName().equals(password) && !appUser.getUsername().equalsIgnoreCase(password)) {
+            throw new IllegalArgumentException("Credenciais inválidas. Use user/password iguais ao utilizador.");
+        }
+        return appUser;
+    }
+
+    private String requireText(String value, String message) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(message);
+        }
+        return value.trim();
+    }
+
+    private List<String> normalizeParticipantList(List<String> participants) {
+        if (participants == null) {
+            return List.of();
+        }
+        return participants.stream()
+                .filter(participant -> participant != null && !participant.trim().isEmpty())
+                .map(String::trim)
+                .distinct()
+                .toList();
+    }
+
+    private String nextRoomId(String roomName) {
+        String normalized = Normalizer.normalize(roomName, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-|-$)", "");
+        String base = normalized.isBlank() ? "canal" : normalized;
+        String candidate = "room-" + base;
+        int suffix = 2;
+        while (rooms.containsKey(candidate)) {
+            candidate = "room-" + base + "-" + suffix++;
+        }
+        return candidate;
+    }
+
+    private AppUserEntity resolveExistingUser(String user) {
+        return appUserRepository.findByUsernameIgnoreCase(user)
+                .or(() -> appUserRepository.findByDisplayNameIgnoreCase(user))
+                .orElseThrow(() -> new IllegalArgumentException("Utilizador não encontrado: " + user));
+    }
+
+    private Optional<String> resolveCanonicalUsername(String user) {
+        if (user == null || user.isBlank()) {
+            return Optional.empty();
+        }
+        return appUserRepository.findByUsernameIgnoreCase(user)
+                .map(AppUserEntity::getUsername)
+                .or(() -> appUserRepository.findByDisplayNameIgnoreCase(user)
+                        .map(AppUserEntity::getUsername));
+    }
+
+    private ChatRoom toChatRoom(RoomSession room, String activeUser) {
         Map<String, AppUserEntity> usersByUsername = loadUsersByUsername();
         return new ChatRoom(
                 room.id(),
@@ -175,7 +273,8 @@ public class ChatApplicationFacade {
                                 : username)
                         .toList(),
                 room.state().name(),
-                Math.toIntExact(room.unreadMessages()));
+                Math.toIntExact(room.unreadMessages()),
+                !activeUser.isBlank() && room.participants().contains(activeUser));
     }
 
     private void persistState() {

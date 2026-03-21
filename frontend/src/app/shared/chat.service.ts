@@ -19,11 +19,14 @@ export class ChatService {
   private readonly websocketEndpoint = 'ws://localhost:8080/ws/chat';
 
   loadUsers(): Observable<AppUser[]> {
-    return defer(() => from(this.runQuery<{ users: AppUser[] }>('query { users { username displayName } }').then((r) => r.data?.users ?? [])));
+    return defer(() => from(this.runQuery<{ users: AppUser[] }>('query { users { username displayName passwordHint } }').then((r) => r.data?.users ?? [])));
   }
 
-  loadRooms(): Observable<ChatRoom[]> {
-    return defer(() => from(this.runQuery<{ rooms: ChatRoom[] }>('query { rooms { id name participants state unreadMessages } }').then((r) => r.data?.rooms ?? [])));
+  loadRooms(activeUser: string): Observable<ChatRoom[]> {
+    return defer(() => from(this.runQuery<{ rooms: ChatRoom[] }>(
+      'query($activeUser: String!) { rooms(activeUser: $activeUser) { id name participants state unreadMessages canManageMembers } }',
+      { activeUser }
+    ).then((r) => r.data?.rooms ?? [])));
   }
 
   loadMessages(roomId: string): Observable<ChatMessage[]> {
@@ -68,15 +71,39 @@ export class ChatService {
     })));
   }
 
-  focusRoom(roomId: string): Observable<ChatRoom> {
+  focusRoom(roomId: string, activeUser: string): Observable<ChatRoom> {
     return defer(() => from(this.runQuery<{ focusRoom: ChatRoom }>(
-      'mutation($roomId: String!) { focusRoom(roomId: $roomId) { id name participants state unreadMessages } }',
-      { roomId }
+      'mutation($roomId: String!, $activeUser: String!) { focusRoom(roomId: $roomId, activeUser: $activeUser) { id name participants state unreadMessages canManageMembers } }',
+      { roomId, activeUser }
     ).then((r) => {
       if (!r.data?.focusRoom) {
         throw this.createError('Resposta GraphQL inválida para focusRoom.');
       }
       return r.data.focusRoom;
+    })));
+  }
+
+  createRoom(name: string, activeUser: string, participants: string[]): Observable<ChatRoom> {
+    return defer(() => from(this.runQuery<{ createRoom: ChatRoom }>(
+      'mutation($name: String!, $activeUser: String!, $participants: [String!]!) { createRoom(name: $name, activeUser: $activeUser, participants: $participants) { id name participants state unreadMessages canManageMembers } }',
+      { name, activeUser, participants }
+    ).then((r) => {
+      if (!r.data?.createRoom) {
+        throw this.createError('Resposta GraphQL inválida para createRoom.');
+      }
+      return r.data.createRoom;
+    })));
+  }
+
+  addMemberToRoom(roomId: string, member: string, activeUser: string): Observable<ChatRoom> {
+    return defer(() => from(this.runQuery<{ addMemberToRoom: ChatRoom }>(
+      'mutation($roomId: String!, $member: String!, $activeUser: String!) { addMemberToRoom(roomId: $roomId, member: $member, activeUser: $activeUser) { id name participants state unreadMessages canManageMembers } }',
+      { roomId, member, activeUser }
+    ).then((r) => {
+      if (!r.data?.addMemberToRoom) {
+        throw this.createError('Resposta GraphQL inválida para addMemberToRoom.');
+      }
+      return r.data.addMemberToRoom;
     })));
   }
 
@@ -86,7 +113,7 @@ export class ChatService {
     return socket;
   }
 
-  private async runQuery<T>(query: string, variables: Record<string, string | boolean> = {}): Promise<GraphqlResponse<T>> {
+  private async runQuery<T>(query: string, variables: Record<string, string | boolean | string[]> = {}): Promise<GraphqlResponse<T>> {
     const raw = await fetch(this.endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

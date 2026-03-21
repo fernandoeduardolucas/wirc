@@ -34,22 +34,6 @@
     @if (error) {
       <div class="error-banner">
         <strong>{{ error.message }}</strong>
-        @if (error.code) {
-          <div class="error-code">Código: {{ error.code }}</div>
-        }
-        @if (error.details?.roomName || error.details?.user || error.details?.participants?.length) {
-          <ul class="error-details">
-            @if (error.details?.roomName) {
-              <li><strong>Sala:</strong> {{ error.details?.roomName }}</li>
-            }
-            @if (error.details?.user) {
-              <li><strong>Utilizador:</strong> {{ error.details?.user }}</li>
-            }
-            @if (error.details?.participants?.length) {
-              <li><strong>Participantes válidos:</strong> {{ error.details?.participants?.join(', ') }}</li>
-            }
-          </ul>
-        }
       </div>
     }
 
@@ -81,7 +65,15 @@
         </ul>
       </section>
 
-      <app-canal [room]="currentRoom" [currentUser]="currentUser" [topUsers]="topUsers" (userSelected)="userSelected.emit($event)" />
+      <app-canal
+        [room]="currentRoom"
+        [currentUser]="currentUser"
+        [authenticatedUser]="authenticatedUser"
+        [users]="users"
+        [topUsers]="topUsers"
+        (userSelected)="userSelected.emit($event)"
+        (memberAdded)="memberAdded.emit($event)"
+      />
     </div>
 
     <footer class="composer-box">

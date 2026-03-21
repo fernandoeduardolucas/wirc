@@ -1,11 +1,11 @@
 <section class="card section-stack">
   <div class="section-title">
     <h2>Identidade</h2>
-    <span class="status">online</span>
+    <span class="status">{{ authenticatedUser ? 'autenticado' : 'offline' }}</span>
   </div>
 
   <p class="label">Utilizador ativo</p>
-  <div class="identity-current">{{ currentUser || 'Sem utilizador selecionado' }}</div>
+  <div class="identity-current">{{ authenticatedUser || 'Sem identidade autenticada' }}</div>
 
   <div class="user-list-box">
     @for (user of users; track user.displayName) {
@@ -17,5 +17,13 @@
         {{ user.displayName }}
       </button>
     }
+  </div>
+
+  <div class="card nested-panel section-stack compact-stack">
+    <p class="label">Credenciais</p>
+    <input [ngModel]="currentUser" (ngModelChange)="userSelected.emit($event)" placeholder="user" />
+    <input [(ngModel)]="password" type="password" placeholder="password" (keydown.enter)="submitCredentials()" />
+    <small class="muted">Para todos os utilizadores, o user e a password são iguais. Ex.: Ana / Ana.</small>
+    <button (click)="submitCredentials()">Assumir identidade</button>
   </div>
 </section>

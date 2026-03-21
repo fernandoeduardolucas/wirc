@@ -19,4 +19,9 @@ public class AppUserEntity {
 
     @Column(name = "display_name", nullable = false, length = 150)
     private String displayName;
+
+    public AppUserEntity(String username, String displayName) {
+        this.username = username;
+        this.displayName = displayName;
+    }
 }

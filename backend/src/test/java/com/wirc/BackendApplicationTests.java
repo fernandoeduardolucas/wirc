@@ -1,7 +1,7 @@
 package com.wirc;
 
-import com.wirc.service.ChatApplicationFacade;
 import com.wirc.model.ChatCommand;
+import com.wirc.service.ChatApplicationFacade;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ class BackendApplicationTests {
 
     @Test
     void contextLoads() {
-        assertThat(chatApplicationFacade.rooms()).hasSize(3);
+        assertThat(chatApplicationFacade.rooms("Ana")).hasSize(3);
     }
 
     @Test

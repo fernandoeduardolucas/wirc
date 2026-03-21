@@ -54,7 +54,7 @@ class DatabaseChatRoomLoaderTest {
         for (String displayName : displayNames) {
             ChatRoomMemberEntity member = mock(ChatRoomMemberEntity.class);
             AppUserEntity user = mock(AppUserEntity.class);
-            when(user.getDisplayName()).thenReturn(displayName);
+            when(user.getUsername()).thenReturn(displayName);
             when(member.getUser()).thenReturn(user);
             members.add(member);
         }

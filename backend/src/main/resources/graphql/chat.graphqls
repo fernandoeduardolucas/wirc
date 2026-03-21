@@ -1,6 +1,6 @@
 type Query {
   users: [AppUser!]!
-  rooms: [ChatRoom!]!
+  rooms(activeUser: String = ""): [ChatRoom!]!
   messagesByRoom(roomId: String!): [ChatMessage!]!
   searchMessages(term: String!): [ChatMessage!]!
   roomStats(roomId: String!): RoomStats!
@@ -9,7 +9,9 @@ type Query {
 
 type Mutation {
   sendMessage(roomId: String!, user: String!, message: String!, focusedRoom: Boolean!): ChatMessage!
-  focusRoom(roomId: String!): ChatRoom!
+  focusRoom(roomId: String!, activeUser: String!): ChatRoom!
+  createRoom(name: String!, activeUser: String!, participants: [String!]!): ChatRoom!
+  addMemberToRoom(roomId: String!, member: String!, activeUser: String!): ChatRoom!
 }
 
 type ChatRoom {
@@ -18,6 +20,7 @@ type ChatRoom {
   participants: [String!]!
   state: String!
   unreadMessages: Int!
+  canManageMembers: Boolean!
 }
 
 type ChatMessage {
@@ -42,8 +45,8 @@ type UserMessageCount {
   totalMessages: Int!
 }
 
-
 type AppUser {
   username: String!
   displayName: String!
+  passwordHint: String!
 }

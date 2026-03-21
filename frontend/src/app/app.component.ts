@@ -27,13 +27,18 @@ import { ChatRoom } from './shared/chat.types';
         <app-identity
           [users]="vm.users"
           [currentUser]="vm.currentUser"
+          [authenticatedUser]="vm.authenticatedUser"
           (userSelected)="store.selectUser($event)"
+          (credentialsSubmitted)="store.authenticate($event.user, $event.password)"
         />
 
         <app-rooms
           [rooms]="vm.rooms"
           [activeRoomId]="vm.activeRoomId"
+          [users]="vm.users"
+          [authenticatedUser]="vm.authenticatedUser"
           (roomSelected)="store.selectRoom($event)"
+          (roomCreated)="store.createRoom($event.name, $event.participants)"
         />
       </aside>
 
@@ -51,14 +56,17 @@ import { ChatRoom } from './shared/chat.types';
           [messages]="vm.messages"
           [searchResults]="vm.searchResults"
           [stats]="vm.stats"
+          [users]="vm.users"
           [topUsers]="vm.topUsers"
           [currentUser]="vm.currentUser"
+          [authenticatedUser]="vm.authenticatedUser"
           [notification]="vm.notification"
           [error]="vm.error"
           [roomNameResolver]="roomNameResolver(vm.rooms)"
           (searchSubmitted)="store.runSearch($event)"
           (messageSent)="store.sendMessage($event)"
           (userSelected)="store.selectUser($event)"
+          (memberAdded)="store.addMemberToActiveRoom($event)"
         />
       </main>
     </div>
