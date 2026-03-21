@@ -31,7 +31,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+// Facade pattern: this service exposes a single entry point for the chat application use cases.
 public class ChatApplicationFacade {
+    private static final List<String> HIGHLIGHT_KEYWORDS = List.of("graphql", "websocket");
+
     private final Map<String, RoomSession> rooms = new ConcurrentHashMap<>();
     private final WebSocketNotificationGateway notificationGateway;
     private final MessageValidationHandler validationChain;
@@ -60,6 +63,7 @@ public class ChatApplicationFacade {
     }
 
     private MessageValidationHandler buildValidationChain() {
+        // Chain of Responsibility: each handler validates one rule and delegates to the next one.
         MessageValidationHandler required = new RequiredFieldValidationHandler();
         required
                 .linkWith(new ParticipantValidationHandler(rooms))
@@ -99,46 +103,22 @@ public class ChatApplicationFacade {
     }
 
     public ChatMessage sendMessage(ChatCommand command) {
-        String canonicalUsername = resolveCanonicalUsername(command.user())
-                .orElseThrow(() -> new IllegalArgumentException("Utilizador não encontrado: " + command.user()));
-        ChatCommand validatedCommand = new ChatCommand(
-                command.roomId(),
-                canonicalUsername,
-                command.message(),
-                command.focusedRoom());
-        validationChain.validate(validatedCommand);
-        RoomSession room = requireRoom(command.roomId());
-        boolean highlighted = command.message().toLowerCase(Locale.ROOT).contains("graphql")
-                || command.message().toLowerCase(Locale.ROOT).contains("websocket");
-
-        ChatMessage chatMessage = new ChatMessage(
-                UUID.randomUUID().toString(),
-                room.id(),
-                canonicalUsername,
-                command.message(),
-                Instant.now(),
-                highlighted);
+        ChatCommand validatedCommand = validateCommand(command);
+        RoomSession room = requireRoom(validatedCommand.roomId());
+        ChatMessage chatMessage = createChatMessage(room, validatedCommand.user(), validatedCommand.message());
 
         room.messages().add(chatMessage);
-        room.state().onMessageSent(room, command.focusedRoom());
+        // State pattern: room behavior changes according to the current room state.
+        room.state().onMessageSent(room, validatedCommand.focusedRoom());
         persistState();
-
-        notificationGateway.broadcast(new ChatNotification(
-                room.id(),
-                room.name(),
-                command.message(),
-                canonicalUsername,
-                "NEW_MESSAGE",
-                chatMessage.id(),
-                chatMessage.sentAt(),
-                chatMessage.highlighted()
-        ));
+        broadcastNewMessage(room, chatMessage);
 
         return chatMessage;
     }
 
     public ChatRoom focusRoom(String roomId, String activeUser) {
         RoomSession room = requireRoom(roomId);
+        // State pattern: focusing a room delegates the transition logic to the current state object.
         room.state().onRoomFocused(room);
         persistState();
         return toChatRoom(room, resolveCanonicalUsername(activeUser).orElse(""));
@@ -173,16 +153,11 @@ public class ChatApplicationFacade {
     public ChatRoom createRoom(String name, String activeUser, List<String> participants) {
         AppUserEntity actor = resolveExistingUser(activeUser);
         String roomName = requireText(name, "Nome do canal obrigatório.");
-        List<String> requestedParticipants = normalizeParticipantList(participants);
-        LinkedHashMap<String, String> canonicalParticipants = new LinkedHashMap<>();
-        canonicalParticipants.put(actor.getUsername(), actor.getUsername());
-        requestedParticipants.stream()
-                .map(this::resolveExistingUser)
-                .forEach(participant -> canonicalParticipants.put(participant.getUsername(), participant.getUsername()));
+        LinkedHashMap<String, String> canonicalParticipants = resolveCanonicalParticipants(actor, participants);
 
         String roomId = nextRoomId(roomName);
         ChatRoomEntity roomEntity = new ChatRoomEntity(roomId, roomName);
-        canonicalParticipants.values().forEach(username -> roomEntity.addMember(resolveExistingUser(username)));
+        addMembersToEntity(roomEntity, canonicalParticipants.values());
         chatRoomRepository.save(roomEntity);
 
         RoomSession roomSession = new RoomSession(roomId, roomName, new com.wirc.state.FocusedRoomState(), new ArrayList<>(canonicalParticipants.values()));
@@ -195,9 +170,7 @@ public class ChatApplicationFacade {
     public ChatRoom addMemberToRoom(String roomId, String member, String activeUser) {
         RoomSession room = requireRoom(roomId);
         AppUserEntity actor = resolveExistingUser(activeUser);
-        if (!room.participants().contains(actor.getUsername())) {
-            throw new IllegalArgumentException("Só membros do canal podem adicionar novos membros.");
-        }
+        ensureUserCanManageRoom(room, actor);
 
         AppUserEntity memberEntity = resolveExistingUser(member);
         room.participants().add(memberEntity.getUsername());
@@ -219,6 +192,46 @@ public class ChatApplicationFacade {
         return appUser;
     }
 
+    private ChatCommand validateCommand(ChatCommand command) {
+        String canonicalUsername = resolveCanonicalUsername(command.user())
+                .orElseThrow(() -> new IllegalArgumentException("Utilizador não encontrado: " + command.user()));
+        ChatCommand validatedCommand = new ChatCommand(
+                command.roomId(),
+                canonicalUsername,
+                command.message(),
+                command.focusedRoom());
+        validationChain.validate(validatedCommand);
+        return validatedCommand;
+    }
+
+    private ChatMessage createChatMessage(RoomSession room, String canonicalUsername, String message) {
+        return new ChatMessage(
+                UUID.randomUUID().toString(),
+                room.id(),
+                canonicalUsername,
+                message,
+                Instant.now(),
+                isHighlighted(message));
+    }
+
+    private boolean isHighlighted(String message) {
+        String normalizedMessage = message.toLowerCase(Locale.ROOT);
+        return HIGHLIGHT_KEYWORDS.stream().anyMatch(normalizedMessage::contains);
+    }
+
+    private void broadcastNewMessage(RoomSession room, ChatMessage chatMessage) {
+        notificationGateway.broadcast(new ChatNotification(
+                room.id(),
+                room.name(),
+                chatMessage.message(),
+                chatMessage.user(),
+                "NEW_MESSAGE",
+                chatMessage.id(),
+                chatMessage.sentAt(),
+                chatMessage.highlighted()
+        ));
+    }
+
     private String requireText(String value, String message) {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException(message);
@@ -235,6 +248,21 @@ public class ChatApplicationFacade {
                 .map(String::trim)
                 .distinct()
                 .toList();
+    }
+
+    private LinkedHashMap<String, String> resolveCanonicalParticipants(AppUserEntity actor, List<String> participants) {
+        LinkedHashMap<String, String> canonicalParticipants = new LinkedHashMap<>();
+        canonicalParticipants.put(actor.getUsername(), actor.getUsername());
+        normalizeParticipantList(participants).stream()
+                .map(this::resolveExistingUser)
+                .forEach(participant -> canonicalParticipants.put(participant.getUsername(), participant.getUsername()));
+        return canonicalParticipants;
+    }
+
+    private void addMembersToEntity(ChatRoomEntity roomEntity, Iterable<String> usernames) {
+        for (String username : usernames) {
+            roomEntity.addMember(resolveExistingUser(username));
+        }
     }
 
     private String nextRoomId(String roomName) {
@@ -281,6 +309,12 @@ public class ChatApplicationFacade {
                 room.state().name(),
                 Math.toIntExact(room.unreadMessages()),
                 !activeUser.isBlank() && room.participants().contains(activeUser));
+    }
+
+    private void ensureUserCanManageRoom(RoomSession room, AppUserEntity actor) {
+        if (!room.participants().contains(actor.getUsername())) {
+            throw new IllegalArgumentException("Só membros do canal podem adicionar novos membros.");
+        }
     }
 
     private void persistState() {

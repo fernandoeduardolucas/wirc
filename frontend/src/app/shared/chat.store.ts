@@ -5,6 +5,7 @@ import { ChatService } from './chat.service';
 import { AppError, AppUser, ChatMessage, ChatNotification, ChatRoom, RoomStats, UserMessageCount } from './chat.types';
 
 @Injectable({ providedIn: 'root' })
+// Observer pattern: coordinates reactive application state through RxJS subjects and subscriptions.
 export class ChatStore implements OnDestroy {
   private readonly chatService = inject(ChatService);
   private readonly refreshRooms$ = new BehaviorSubject<void>(undefined);

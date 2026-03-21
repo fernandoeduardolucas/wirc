@@ -9,6 +9,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 @Component
 @RequiredArgsConstructor
+// Observer pattern support: registers and unregisters websocket clients that receive chat updates.
 public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final WebSocketNotificationGateway gateway;
 

@@ -2,6 +2,7 @@ package com.wirc.state;
 
 import com.wirc.service.RoomSession;
 
+// State pattern: each room state encapsulates how a room reacts to messages and focus events.
 public interface RoomState {
     String name();
 

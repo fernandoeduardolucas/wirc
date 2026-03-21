@@ -2,6 +2,7 @@ package com.wirc.validation;
 
 import com.wirc.model.ChatCommand;
 
+// Chain of Responsibility pattern: validates the message length after previous checks succeed.
 public class MessageLengthValidationHandler extends MessageValidationHandler {
     @Override
     protected void check(ChatCommand command) {

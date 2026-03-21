@@ -2,6 +2,7 @@ package com.wirc.validation;
 
 import com.wirc.model.ChatCommand;
 
+// Chain of Responsibility pattern: each validator handles one rule and delegates to the next validator.
 public abstract class MessageValidationHandler {
     private MessageValidationHandler next;
 

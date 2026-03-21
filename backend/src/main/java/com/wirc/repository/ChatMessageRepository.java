@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
+// Repository pattern: abstracts chat message persistence and retrieval operations.
 public interface ChatMessageRepository extends JpaRepository<ChatMessageEntity, String> {
     List<ChatMessageEntity> findAllByRoom_IdOrderBySentAtAsc(String roomId);
 
