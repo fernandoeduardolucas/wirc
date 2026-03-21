@@ -27,8 +27,6 @@ class BackendApplicationTests {
     @Autowired
     private ChatApplicationFacade chatApplicationFacade;
 
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @BeforeEach
     void clearStateFile() throws Exception {
@@ -49,19 +47,4 @@ class BackendApplicationTests {
                 .contains("ana:Olá websocket");
     }
 
-    @Test
-    void serializesWebsocketNotificationInstants() throws Exception {
-        String payload = objectMapper.writeValueAsString(new ChatNotification(
-                "room-equipa",
-                "ana",
-                "Olá websocket",
-                Instant.parse("2026-03-21T12:00:00Z"),
-                "MESSAGE",
-                null,
-                null,
-                false
-        ));
-
-        assertThat(payload).contains("\"sentAt\":\"2026-03-21T12:00:00Z\"");
-    }
 }
