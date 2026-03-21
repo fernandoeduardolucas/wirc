@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +52,7 @@ public class DatabaseChatRoomLoader {
     private Map<String, RoomSessionStateEntity> loadSessionStates() {
         if (!schemaInspector.tableExists(ROOM_SESSION_STATE_TABLE)) {
             log.warn("Table '{}' was not found. Starting with default in-memory room session state until migrations are applied.", ROOM_SESSION_STATE_TABLE);
-            return Collections.emptyMap();
+            return Map.of();
         }
 
         return roomSessionStateRepository.findAll().stream()
@@ -63,7 +62,7 @@ public class DatabaseChatRoomLoader {
     private Map<String, List<ChatMessage>> loadMessagesByRoom() {
         if (!schemaInspector.tableExists(CHAT_MESSAGE_TABLE)) {
             log.warn("Table '{}' was not found. Starting with empty room message history until migrations are applied.", CHAT_MESSAGE_TABLE);
-            return Collections.emptyMap();
+            return Map.of();
         }
 
         return chatMessageRepository.findAll().stream()

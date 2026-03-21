@@ -12,4 +12,8 @@ public record RoomSessionSnapshot(
         long unreadMessages,
         List<ChatMessage> messages
 ) {
+    public RoomSessionSnapshot {
+        participants = List.copyOf(participants);
+        messages = List.copyOf(messages);
+    }
 }
