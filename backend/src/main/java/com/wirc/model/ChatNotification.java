@@ -1,10 +1,15 @@
 package com.wirc.model;
 
+import java.time.Instant;
+
 public record ChatNotification(
         String roomId,
         String roomName,
         String preview,
         String user,
-        String type
+        String type,
+        String messageId,
+        Instant sentAt,
+        boolean highlighted
 ) {
 }
