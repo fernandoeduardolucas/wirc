@@ -43,3 +43,16 @@ export interface AppUser {
   username: string;
   displayName: string;
 }
+
+export interface AppErrorDetails {
+  roomId?: string;
+  roomName?: string;
+  user?: string;
+  participants?: string[];
+}
+
+export interface AppError {
+  message: string;
+  code?: string;
+  details?: AppErrorDetails;
+}

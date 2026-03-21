@@ -32,7 +32,25 @@
       <div class="notification">🔔 {{ notification }}</div>
     }
     @if (error) {
-      <div class="error-banner">{{ error }}</div>
+      <div class="error-banner">
+        <strong>{{ error.message }}</strong>
+        @if (error.code) {
+          <div class="error-code">Código: {{ error.code }}</div>
+        }
+        @if (error.details?.roomName || error.details?.user || error.details?.participants?.length) {
+          <ul class="error-details">
+            @if (error.details?.roomName) {
+              <li><strong>Sala:</strong> {{ error.details?.roomName }}</li>
+            }
+            @if (error.details?.user) {
+              <li><strong>Utilizador:</strong> {{ error.details?.user }}</li>
+            }
+            @if (error.details?.participants?.length) {
+              <li><strong>Participantes válidos:</strong> {{ error.details?.participants?.join(', ') }}</li>
+            }
+          </ul>
+        }
+      </div>
     }
 
     <div class="chat-body">

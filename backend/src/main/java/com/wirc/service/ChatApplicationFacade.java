@@ -1,6 +1,7 @@
 package com.wirc.service;
 
 import com.wirc.bootstrap.DatabaseChatRoomLoader;
+import com.wirc.entity.AppUserEntity;
 import com.wirc.model.*;
 import com.wirc.persistence.DatabaseChatStateStore;
 import com.wirc.repository.AppUserRepository;
@@ -20,6 +21,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.SequencedMap;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -60,7 +62,7 @@ public class ChatApplicationFacade {
     }
 
     public List<AppUser> users() {
-        return appUserRepository.findAllByOrderByDisplayNameAsc().stream()
+        return loadUsersByUsername().values().stream()
                 .map(user -> new AppUser(user.getUsername(), user.getDisplayName()))
                 .toList();
     }
@@ -163,10 +165,15 @@ public class ChatApplicationFacade {
     }
 
     private ChatRoom toChatRoom(RoomSession room) {
+        Map<String, AppUserEntity> usersByUsername = loadUsersByUsername();
         return new ChatRoom(
                 room.id(),
                 room.name(),
-                new ArrayList<>(room.participants()),
+                room.participants().stream()
+                        .map(username -> usersByUsername.containsKey(username)
+                                ? usersByUsername.get(username).getDisplayName()
+                                : username)
+                        .toList(),
                 room.state().name(),
                 Math.toIntExact(room.unreadMessages()));
     }
@@ -184,5 +191,14 @@ public class ChatApplicationFacade {
             throw new IllegalArgumentException("Sala não encontrada: " + roomId);
         }
         return room;
+    }
+
+    private Map<String, AppUserEntity> loadUsersByUsername() {
+        return appUserRepository.findAllByOrderByDisplayNameAsc().stream()
+                .collect(Collectors.toMap(
+                        AppUserEntity::getUsername,
+                        Function.identity(),
+                        (left, right) -> left,
+                        LinkedHashMap::new));
     }
 }
