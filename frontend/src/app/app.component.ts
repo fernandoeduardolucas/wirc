@@ -12,7 +12,8 @@ import { ChatRoom } from './shared/chat.types';
   standalone: true,
   imports: [CommonModule, ChatComponent, IdentityComponent, RoomsComponent],
   template: `
-    <div class="shell" *ngIf="vm$ | async as vm">
+    @if (vm$ | async; as vm) {
+    <div class="shell">
       <aside class="sidebar-panel">
         <div class="brand card">
           <img
@@ -57,6 +58,7 @@ import { ChatRoom } from './shared/chat.types';
         />
       </main>
     </div>
+    }
   `
 })
 export class AppComponent {
