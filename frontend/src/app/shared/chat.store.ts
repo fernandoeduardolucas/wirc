@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { BehaviorSubject, EMPTY, Subject, combineLatest } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, combineLatest, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { ChatService } from './chat.service';
 import { AppError, AppUser, ChatMessage, ChatNotification, ChatRoom, RoomStats, UserMessageCount } from './chat.types';
@@ -20,26 +20,26 @@ export class ChatStore implements OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private socket?: WebSocket;
 
+
   readonly users$ = this.refreshRooms$.pipe(
-    switchMap(() => this.chatService.loadUsers()),
-    tap((users) => {
-      if (!this.currentUserSubject.value && users.length > 0) {
-        this.currentUserSubject.next(users[0].displayName);
-      }
-    }),
+    switchMap(() => this.chatService.loadUsers(this.authenticatedUserSubject.value)),
     catchError((error: Error) => this.handleError(error, [] as AppUser[]))
   );
 
   readonly rooms$ = this.refreshRooms$.pipe(
     switchMap(() => this.chatService.loadRooms(this.authenticatedUserSubject.value)),
     tap((rooms) => {
+      if (!this.authenticatedUserSubject.value) {
+        this.activeRoomIdSubject.next('');
+        return;
+      }
       const activeRoomId = this.activeRoomIdSubject.value;
       if (!activeRoomId && rooms.length > 0) {
         this.activeRoomIdSubject.next(rooms[0].id);
         return;
       }
-      if (activeRoomId && !rooms.some((room) => room.id === activeRoomId) && rooms.length > 0) {
-        this.activeRoomIdSubject.next(rooms[0].id);
+      if (activeRoomId && !rooms.some((room) => room.id === activeRoomId)) {
+        this.activeRoomIdSubject.next(rooms[0]?.id ?? '');
       }
     }),
     catchError((error: Error) => this.handleError(error, [] as ChatRoom[]))
@@ -85,7 +85,7 @@ export class ChatStore implements OnDestroy {
     ).subscribe((stats) => this.roomStatsSubject.next(stats));
 
     this.refreshRooms$.pipe(
-      switchMap(() => this.chatService.loadTopUsers()),
+      switchMap(() => this.chatService.loadTopUsers(this.authenticatedUserSubject.value)),
       catchError((error: Error) => this.handleError(error, [] as UserMessageCount[]))
     ).subscribe((users) => this.topUsersSubject.next(users));
 
@@ -107,15 +107,35 @@ export class ChatStore implements OnDestroy {
   authenticate(displayName: string, password: string): void {
     const normalizedUser = displayName.trim();
     const normalizedPassword = password.trim();
-    if (!normalizedUser || normalizedUser !== normalizedPassword) {
-      this.errorSubject.next({ message: 'Credenciais inválidas. Use user/password iguais, por exemplo Ana / Ana.' });
+    if (!normalizedUser || !normalizedPassword) {
+      this.errorSubject.next({ message: 'Introduza user e password para autenticar.' });
       return;
     }
 
-    this.currentUserSubject.next(normalizedUser);
-    this.authenticatedUserSubject.next(normalizedUser);
+    this.chatService.signIn(normalizedUser, normalizedPassword).pipe(
+      catchError((error: Error) => this.handleError(error, null))
+    ).subscribe((user) => {
+      if (!user) {
+        return;
+      }
+      this.currentUserSubject.next(user.displayName);
+      this.authenticatedUserSubject.next(user.displayName);
+      this.errorSubject.next(null);
+      this.notificationSubject.next(`Identidade assumida: ${user.displayName}`);
+      this.refresh();
+    });
+  }
+
+  signOut(): void {
+    this.authenticatedUserSubject.next('');
+    this.currentUserSubject.next('');
+    this.activeRoomIdSubject.next('');
+    this.roomMessagesSubject.next([]);
+    this.searchResultsSubject.next([]);
+    this.roomStatsSubject.next(null);
+    this.topUsersSubject.next([]);
     this.errorSubject.next(null);
-    this.notificationSubject.next(`Identidade assumida: ${normalizedUser}`);
+    this.notificationSubject.next('Sessão terminada.');
     this.refresh();
   }
 
@@ -204,6 +224,10 @@ export class ChatStore implements OnDestroy {
   }
 
   private handleNotification(notification: ChatNotification): void {
+    if (!this.authenticatedUserSubject.value) {
+      return;
+    }
+
     if (notification.type === 'CONNECTED') {
       this.notificationSubject.next(notification.preview);
       return;
@@ -224,44 +248,20 @@ export class ChatStore implements OnDestroy {
         highlighted: notification.highlighted
       };
 
-      if (notification.roomId === activeRoomId) {
-        this.appendLiveMessage(liveMessage);
-        this.refreshRoomStats(activeRoomId);
+      if (notification.roomId === activeRoomId && !isOwnMessage) {
+        const currentMessages = this.roomMessagesSubject.value;
+        if (!currentMessages.some((message) => message.id === liveMessage.id)) {
+          this.roomMessagesSubject.next([...currentMessages, liveMessage]);
+        }
       }
-    }
 
-    if (!isOwnMessage) {
+      this.refresh();
       this.notificationSubject.next(`${notification.user ?? 'Sistema'}: ${notification.preview}`);
     }
-
-    this.refreshRooms$.next();
-  }
-
-  private appendLiveMessage(message: ChatMessage): void {
-    const messages = this.roomMessagesSubject.value;
-    if (messages.some((existingMessage) => existingMessage.id === message.id)) {
-      return;
-    }
-
-    this.roomMessagesSubject.next([...messages, message]);
-  }
-
-  private refreshRoomStats(roomId: string): void {
-    this.chatService.loadRoomStats(roomId).pipe(
-      catchError((error: Error) => this.handleError(error, null))
-    ).subscribe((stats) => this.roomStatsSubject.next(stats));
   }
 
   private handleError<T>(error: Error, fallback: T) {
-    this.errorSubject.next(this.toAppError(error));
-    return new BehaviorSubject(fallback);
-  }
-
-  private toAppError(error: Error | AppError): AppError {
-    if ('code' in error || 'details' in error) {
-      return error as AppError;
-    }
-
-    return { message: error.message };
+    this.errorSubject.next({ message: error.message });
+    return of(fallback);
   }
 }

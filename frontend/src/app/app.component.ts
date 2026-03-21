@@ -42,6 +42,7 @@ import { ChatRoom } from './shared/chat.types';
         />
       </aside>
 
+      @if (vm.authenticatedUser) {
       <main class="workspace">
         <section class="hero card">
           <img class="hero-logo" [src]="wircLogo" alt="WIRC mascot" />
@@ -69,6 +70,17 @@ import { ChatRoom } from './shared/chat.types';
           (memberAdded)="store.addMemberToActiveRoom($event)"
         />
       </main>
+      } @else {
+      <main class="workspace">
+        <section class="hero card">
+          <img class="hero-logo" [src]="wircLogo" alt="WIRC mascot" />
+          <div>
+            <p class="eyebrow">Autenticação obrigatória</p>
+            <h2>Sem identidade autenticada não pode ver nada exceto autenticar-se.</h2>
+          </div>
+        </section>
+      </main>
+      }
     </div>
     }
   `

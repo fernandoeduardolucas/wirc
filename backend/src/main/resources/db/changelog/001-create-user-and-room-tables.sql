@@ -1,6 +1,7 @@
 CREATE TABLE app_user (
     username VARCHAR(100) PRIMARY KEY,
-    display_name VARCHAR(150) NOT NULL
+    display_name VARCHAR(150) NOT NULL,
+    password VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE chat_room (

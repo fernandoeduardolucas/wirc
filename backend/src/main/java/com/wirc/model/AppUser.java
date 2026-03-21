@@ -1,4 +1,4 @@
 package com.wirc.model;
 
-public record AppUser(String username, String displayName, String passwordHint) {
+public record AppUser(String username, String displayName) {
 }

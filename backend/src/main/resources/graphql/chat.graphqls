@@ -8,6 +8,7 @@ type Query {
 }
 
 type Mutation {
+  signIn(user: String!, password: String!): AppUser!
   sendMessage(roomId: String!, user: String!, message: String!, focusedRoom: Boolean!): ChatMessage!
   focusRoom(roomId: String!, activeUser: String!): ChatRoom!
   createRoom(name: String!, activeUser: String!, participants: [String!]!): ChatRoom!
@@ -48,5 +49,4 @@ type UserMessageCount {
 type AppUser {
   username: String!
   displayName: String!
-  passwordHint: String!
 }
