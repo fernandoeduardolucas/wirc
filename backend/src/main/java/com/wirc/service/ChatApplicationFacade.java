@@ -12,6 +12,7 @@ import com.wirc.validation.MessageValidationHandler;
 import com.wirc.validation.ParticipantValidationHandler;
 import com.wirc.validation.RequiredFieldValidationHandler;
 import com.wirc.websocket.WebSocketNotificationGateway;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 // Facade pattern: this service exposes a single entry point for the chat application use cases.
 public class ChatApplicationFacade {
@@ -105,6 +107,8 @@ public class ChatApplicationFacade {
     public ChatMessage sendMessage(ChatCommand command) {
         ChatCommand validatedCommand = validateCommand(command);
         RoomSession room = requireRoom(validatedCommand.roomId());
+        log.info("Processando mensagem entre utilizadores: roomId={}, roomName={}, user={}, focusedRoom={}, messageLength={}",
+                room.id(), room.name(), validatedCommand.user(), validatedCommand.focusedRoom(), validatedCommand.message().length());
         ChatMessage chatMessage = createChatMessage(room, validatedCommand.user(), validatedCommand.message());
 
         room.messages().add(chatMessage);
@@ -112,6 +116,8 @@ public class ChatApplicationFacade {
         room.state().onMessageSent(room, validatedCommand.focusedRoom());
         persistState();
         broadcastNewMessage(room, chatMessage);
+        log.info("Mensagem persistida e difundida: roomId={}, messageId={}, user={}, highlighted={}",
+                room.id(), chatMessage.id(), chatMessage.user(), chatMessage.highlighted());
 
         return chatMessage;
     }
