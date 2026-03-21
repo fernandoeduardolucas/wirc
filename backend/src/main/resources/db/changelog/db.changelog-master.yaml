@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-user-and-room-tables
+      author: codex
+      changes:
+        - sqlFile:
+            path: db/changelog/001-create-user-and-room-tables.sql
+            relativeToChangelogFile: false
+  - changeSet:
+      id: 002-seed-users-and-rooms
+      author: codex
+      changes:
+        - sqlFile:
+            path: db/changelog/002-seed-users-and-rooms.sql
+            relativeToChangelogFile: false

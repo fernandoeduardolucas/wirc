@@ -1,10 +1,12 @@
 package com.wirc.service;
 
+import com.wirc.bootstrap.DatabaseChatRoomLoader;
 import com.wirc.model.ChatMessage;
 import com.wirc.model.ChatNotification;
 import com.wirc.model.ChatRoom;
 import com.wirc.model.RoomStats;
 import com.wirc.model.UserMessageCount;
+import com.wirc.persistence.ChatStateStore;
 import com.wirc.validation.MessageLengthValidationHandler;
 import com.wirc.validation.MessageValidationHandler;
 import com.wirc.validation.ParticipantValidationHandler;
@@ -28,17 +30,23 @@ public class ChatApplicationFacade {
     private final Map<String, RoomSession> rooms = new ConcurrentHashMap<>();
     private final WebSocketNotificationGateway notificationGateway;
     private final MessageValidationHandler validationChain;
+    private final ChatStateStore chatStateStore;
 
-    public ChatApplicationFacade(ChatRoomFactory roomFactory, WebSocketNotificationGateway notificationGateway) {
+    public ChatApplicationFacade(
+            ChatRoomFactory roomFactory,
+            DatabaseChatRoomLoader databaseChatRoomLoader,
+            WebSocketNotificationGateway notificationGateway,
+            ChatStateStore chatStateStore) {
         this.notificationGateway = notificationGateway;
-        seedRooms(roomFactory);
+        this.chatStateStore = chatStateStore;
+        loadRooms(roomFactory, databaseChatRoomLoader);
         this.validationChain = buildValidationChain();
     }
 
-    private void seedRooms(ChatRoomFactory roomFactory) {
-        rooms.put("room-ana-bruno", roomFactory.create("room-ana-bruno", "Ana & Bruno", List.of("Ana", "Bruno")));
-        rooms.put("room-equipa", roomFactory.create("room-equipa", "Equipa Projeto", List.of("Ana", "Bruno", "Carla", "Diogo")));
-        rooms.put("room-estudo", roomFactory.create("room-estudo", "Grupo de Estudo", List.of("Carla", "Diogo", "Eva")));
+    private void loadRooms(ChatRoomFactory roomFactory, DatabaseChatRoomLoader databaseChatRoomLoader) {
+        chatStateStore.load().ifPresentOrElse(
+                snapshots -> snapshots.forEach(snapshot -> rooms.put(snapshot.id(), roomFactory.createFromSnapshot(snapshot))),
+                () -> databaseChatRoomLoader.loadRooms().forEach(seed -> rooms.put(seed.id(), roomFactory.create(seed))));
     }
 
     private MessageValidationHandler buildValidationChain() {
@@ -54,12 +62,7 @@ public class ChatApplicationFacade {
     public List<ChatRoom> rooms() {
         return rooms.values().stream()
                 .sorted(Comparator.comparing(RoomSession::name))
-                .map(room -> new ChatRoom(
-                        room.id(),
-                        room.name(),
-                        new ArrayList<>(room.participants()),
-                        room.state().name(),
-                        Math.toIntExact(room.unreadMessages())))
+                .map(this::toChatRoom)
                 .toList();
     }
 
@@ -91,6 +94,7 @@ public class ChatApplicationFacade {
 
         room.messages().add(chatMessage);
         room.state().onMessageSent(room, command.focusedRoom()); // Design Pattern: State -> o comportamento muda conforme o estado atual da sala.
+        persistState();
 
         if (!command.focusedRoom()) {
             notificationGateway.broadcast(new ChatNotification(
@@ -108,7 +112,8 @@ public class ChatApplicationFacade {
     public ChatRoom focusRoom(String roomId) {
         RoomSession room = requireRoom(roomId);
         room.state().onRoomFocused(room); // Design Pattern: State -> focar a sala reseta notificações e pode mudar de estado.
-        return new ChatRoom(room.id(), room.name(), new ArrayList<>(room.participants()), room.state().name(), Math.toIntExact(room.unreadMessages()));
+        persistState();
+        return toChatRoom(room);
     }
 
     public RoomStats roomStats(String roomId) {
@@ -134,6 +139,22 @@ public class ChatApplicationFacade {
                 .limit(3)
                 .map(entry -> new UserMessageCount(entry.getKey(), Math.toIntExact(entry.getValue())))
                 .toList();
+    }
+
+    private ChatRoom toChatRoom(RoomSession room) {
+        return new ChatRoom(
+                room.id(),
+                room.name(),
+                new ArrayList<>(room.participants()),
+                room.state().name(),
+                Math.toIntExact(room.unreadMessages()));
+    }
+
+    private void persistState() {
+        chatStateStore.save(rooms.values().stream()
+                .sorted(Comparator.comparing(RoomSession::name))
+                .map(RoomSession::snapshot)
+                .toList());
     }
 
     private RoomSession requireRoom(String roomId) {
