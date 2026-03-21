@@ -8,8 +8,8 @@ import com.wirc.persistence.entity.RoomSessionStateEntity;
 import com.wirc.persistence.repository.ChatMessageRepository;
 import com.wirc.persistence.repository.ChatRoomRepository;
 import com.wirc.persistence.repository.RoomSessionStateRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -19,8 +19,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class DatabaseChatRoomLoader {
-    private static final Logger log = LoggerFactory.getLogger(DatabaseChatRoomLoader.class);
     private static final String ROOM_SESSION_STATE_TABLE = "room_session_state";
     private static final String CHAT_MESSAGE_TABLE = "chat_message";
 
@@ -28,17 +29,6 @@ public class DatabaseChatRoomLoader {
     private final RoomSessionStateRepository roomSessionStateRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final SchemaInspector schemaInspector;
-
-    public DatabaseChatRoomLoader(
-            ChatRoomRepository chatRoomRepository,
-            RoomSessionStateRepository roomSessionStateRepository,
-            ChatMessageRepository chatMessageRepository,
-            SchemaInspector schemaInspector) {
-        this.chatRoomRepository = chatRoomRepository;
-        this.roomSessionStateRepository = roomSessionStateRepository;
-        this.chatMessageRepository = chatMessageRepository;
-        this.schemaInspector = schemaInspector;
-    }
 
     public List<RoomSessionSnapshot> loadRooms() {
         Map<String, RoomSessionStateEntity> sessionStates = loadSessionStates();

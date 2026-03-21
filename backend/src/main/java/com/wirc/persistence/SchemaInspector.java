@@ -1,15 +1,13 @@
 package com.wirc.persistence;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class SchemaInspector {
     private final JdbcTemplate jdbcTemplate;
-
-    public SchemaInspector(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     public boolean tableExists(String tableName) {
         Integer count = jdbcTemplate.queryForObject(

@@ -2,15 +2,13 @@ package com.wirc.validation;
 
 import com.wirc.service.ChatCommand;
 import com.wirc.service.RoomSession;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
 
+@RequiredArgsConstructor
 public class ParticipantValidationHandler extends MessageValidationHandler {
     private final Map<String, RoomSession> rooms;
-
-    public ParticipantValidationHandler(Map<String, RoomSession> rooms) {
-        this.rooms = rooms;
-    }
 
     @Override
     protected void check(ChatCommand command) {

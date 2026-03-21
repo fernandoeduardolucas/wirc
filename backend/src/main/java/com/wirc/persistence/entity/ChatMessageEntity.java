@@ -7,11 +7,17 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
 @Entity
 @Table(name = "chat_message")
+@Getter
+@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class ChatMessageEntity {
     @Id
     @Column(name = "id", nullable = false, length = 100)
@@ -32,40 +38,4 @@ public class ChatMessageEntity {
 
     @Column(name = "highlighted", nullable = false)
     private boolean highlighted;
-
-    protected ChatMessageEntity() {
-    }
-
-    public ChatMessageEntity(String id, ChatRoomEntity room, String username, String message, Instant sentAt, boolean highlighted) {
-        this.id = id;
-        this.room = room;
-        this.username = username;
-        this.message = message;
-        this.sentAt = sentAt;
-        this.highlighted = highlighted;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public ChatRoomEntity getRoom() {
-        return room;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public Instant getSentAt() {
-        return sentAt;
-    }
-
-    public boolean isHighlighted() {
-        return highlighted;
-    }
 }

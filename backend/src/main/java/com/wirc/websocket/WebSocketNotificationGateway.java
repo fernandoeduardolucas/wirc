@@ -1,9 +1,9 @@
 package com.wirc.websocket;
 
-
-import com.wirc.model.ChatNotification;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wirc.model.ChatNotification;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -13,9 +13,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
+@RequiredArgsConstructor
 public class WebSocketNotificationGateway {
     private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     public void addSession(WebSocketSession session) {
         sessions.add(session);
