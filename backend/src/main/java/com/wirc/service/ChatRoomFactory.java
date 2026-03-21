@@ -7,6 +7,7 @@ import com.wirc.state.RoomState;
 import org.springframework.stereotype.Component;
 
 @Component
+// Factory pattern: centralizes RoomSession creation and state instantiation from persisted snapshots.
 public class ChatRoomFactory {
 
     public RoomSession createFromSnapshot(RoomSessionSnapshot snapshot) {

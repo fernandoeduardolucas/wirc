@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @RequiredArgsConstructor
+// Gateway pattern: isolates websocket session management and outbound notification delivery.
 public class WebSocketNotificationGateway {
     private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
     private final ObjectMapper objectMapper;

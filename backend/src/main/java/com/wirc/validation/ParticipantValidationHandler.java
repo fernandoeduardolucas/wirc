@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 @RequiredArgsConstructor
+// Chain of Responsibility pattern: validates whether the sender belongs to the target room.
 public class ParticipantValidationHandler extends MessageValidationHandler {
     private final Map<String, RoomSession> rooms;
 
