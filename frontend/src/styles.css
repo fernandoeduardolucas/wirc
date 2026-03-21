@@ -63,6 +63,25 @@ select {
   filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.28));
 }
 
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 24px;
+}
+
+.hero-logo {
+  width: min(220px, 30vw);
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.35));
+}
+
+.hero h2 {
+  margin: 4px 0 0;
+}
+
 .section-title h2,
 .window-titlebar h2,
 .people-panel h3,
