@@ -74,14 +74,14 @@ export class ChatStore implements OnDestroy {
       filter(Boolean),
       distinctUntilChanged(),
       tap((roomId) => this.focusRoom(roomId)),
-      switchMap((roomId) => this.chatService.loadMessages(roomId)),
+      switchMap((roomId) => this.chatService.loadMessages(roomId, this.authenticatedUserSubject.value)),
       catchError((error: Error) => this.handleError(error, [] as ChatMessage[]))
     ).subscribe((messages) => this.roomMessagesSubject.next(messages));
 
     this.activeRoomId$.pipe(
       filter(Boolean),
       distinctUntilChanged(),
-      switchMap((roomId) => this.chatService.loadRoomStats(roomId)),
+      switchMap((roomId) => this.chatService.loadRoomStats(roomId, this.authenticatedUserSubject.value)),
       catchError((error: Error) => this.handleError(error, null))
     ).subscribe((stats) => this.roomStatsSubject.next(stats));
 
@@ -127,6 +127,29 @@ export class ChatStore implements OnDestroy {
     });
   }
 
+
+  createUser(displayName: string, password: string): void {
+    const normalizedName = displayName.trim();
+    const normalizedPassword = password.trim();
+    if (!normalizedName || !normalizedPassword) {
+      this.errorSubject.next({ message: 'Introduza nome e password para criar o utilizador.' });
+      return;
+    }
+
+    this.chatService.createUser(normalizedName, normalizedPassword).pipe(
+      catchError((error: Error) => this.handleError(error, null))
+    ).subscribe((user) => {
+      if (!user) {
+        return;
+      }
+      this.currentUserSubject.next(user.displayName);
+      this.authenticatedUserSubject.next(user.displayName);
+      this.errorSubject.next(null);
+      this.notificationSubject.next(`Utilizador criado e autenticado: ${user.displayName}`);
+      this.refresh();
+    });
+  }
+
   signOut(): void {
     this.authenticatedUserSubject.next('');
     this.currentUserSubject.next('');
@@ -153,7 +176,7 @@ export class ChatStore implements OnDestroy {
       return;
     }
 
-    this.chatService.searchMessages(normalized).pipe(
+    this.chatService.searchMessages(normalized, this.authenticatedUserSubject.value).pipe(
       catchError((error: Error) => this.handleError(error, [] as ChatMessage[]))
     ).subscribe((results) => this.searchResultsSubject.next(results));
   }

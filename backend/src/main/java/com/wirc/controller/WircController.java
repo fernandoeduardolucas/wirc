@@ -32,28 +32,33 @@ public class WircController {
     }
 
     @QueryMapping
-    public List<ChatMessage> messagesByRoom(@Argument String roomId) {
-        return chatApplication.messagesByRoom(roomId);
+    public List<ChatMessage> messagesByRoom(@Argument String roomId, @Argument String activeUser) {
+        return chatApplication.messagesByRoom(roomId, activeUser);
     }
 
     @QueryMapping
-    public List<ChatMessage> searchMessages(@Argument String term) {
-        return chatApplication.searchMessages(term);
+    public List<ChatMessage> searchMessages(@Argument String term, @Argument String activeUser) {
+        return chatApplication.searchMessages(term, activeUser);
     }
 
     @QueryMapping
-    public RoomStats roomStats(@Argument String roomId) {
-        return chatApplication.roomStats(roomId);
+    public RoomStats roomStats(@Argument String roomId, @Argument String activeUser) {
+        return chatApplication.roomStats(roomId, activeUser);
     }
 
     @QueryMapping
-    public List<UserMessageCount> topUsers() {
-        return chatApplication.topUsers();
+    public List<UserMessageCount> topUsers(@Argument String activeUser) {
+        return chatApplication.topUsers(activeUser);
     }
 
     @MutationMapping
     public AppUser signIn(@Argument String user, @Argument String password) {
         return chatApplication.signIn(user, password);
+    }
+
+    @MutationMapping
+    public AppUser createUser(@Argument String displayName, @Argument String password) {
+        return chatApplication.createUser(displayName, password);
     }
 
     @MutationMapping

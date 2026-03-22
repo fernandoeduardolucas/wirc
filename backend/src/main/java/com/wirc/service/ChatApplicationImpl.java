@@ -1,13 +1,13 @@
 package com.wirc.service;
 
 import com.wirc.bootstrap.DatabaseChatRoomLoader;
+import com.wirc.common.DatabaseChatStateStore;
 import com.wirc.common.RoomSession;
 import com.wirc.entity.AppUserEntity;
 import com.wirc.entity.ChatRoomEntity;
 import com.wirc.factory.ChatRoomFactory;
 import com.wirc.gateway.WebSocketNotificationGateway;
 import com.wirc.model.*;
-import com.wirc.common.DatabaseChatStateStore;
 import com.wirc.repository.AppUserRepository;
 import com.wirc.repository.ChatRoomRepository;
 import com.wirc.validation.MessageLengthValidationHandler;
@@ -27,9 +27,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class ChatApplicationImpl implements ChatApplication{
-
-
+public class ChatApplicationImpl implements ChatApplication {
     private static final List<String> HIGHLIGHT_KEYWORDS = List.of("graphql", "websocket");
 
     private final Map<String, RoomSession> rooms = new ConcurrentHashMap<>();
@@ -68,23 +66,39 @@ public class ChatApplicationImpl implements ChatApplication{
     }
 
     @Override
+    @Transactional
+    public AppUser createUser(String displayName, String password) {
+        String normalizedDisplayName = requireText(displayName, "Nome do utilizador obrigatório.");
+        String normalizedPassword = requireText(password, "Password obrigatória.");
+        ensureDisplayNameAvailable(normalizedDisplayName);
+
+        String username = nextUsername(normalizedDisplayName);
+        AppUserEntity createdUser = appUserRepository.save(new AppUserEntity(username, normalizedDisplayName, normalizedPassword));
+        return new AppUser(createdUser.getUsername(), createdUser.getDisplayName());
+    }
+
+    @Override
     public List<ChatRoom> rooms(String activeUser) {
-        String canonicalUser = resolveCanonicalUsername(activeUser).orElse("");
+        String canonicalUser = requireCanonicalUser(activeUser);
         return rooms.values().stream()
+                .filter(room -> room.participants().contains(canonicalUser))
                 .sorted(Comparator.comparing(RoomSession::name))
                 .map(room -> toChatRoom(room, canonicalUser))
                 .toList();
     }
 
     @Override
-    public List<ChatMessage> messagesByRoom(String roomId) {
-        return new ArrayList<>(requireRoom(roomId).messages());
+    public List<ChatMessage> messagesByRoom(String roomId, String activeUser) {
+        RoomSession room = requireAccessibleRoom(roomId, activeUser);
+        return new ArrayList<>(room.messages());
     }
 
     @Override
-    public List<ChatMessage> searchMessages(String term) {
+    public List<ChatMessage> searchMessages(String term, String activeUser) {
+        String canonicalUser = requireCanonicalUser(activeUser);
         String normalized = term.toLowerCase(Locale.ROOT);
         return rooms.values().stream()
+                .filter(room -> room.participants().contains(canonicalUser))
                 .flatMap(room -> room.messages().stream())
                 .filter(message -> message.message().toLowerCase(Locale.ROOT).contains(normalized))
                 .toList();
@@ -99,7 +113,6 @@ public class ChatApplicationImpl implements ChatApplication{
         ChatMessage chatMessage = createChatMessage(room, validatedCommand.user(), validatedCommand.message());
 
         room.messages().add(chatMessage);
-        // State pattern: room behavior changes according to the current room state.
         room.state().onMessageSent(room, validatedCommand.focusedRoom());
         persistState();
         broadcastNewMessage(room, chatMessage);
@@ -111,16 +124,15 @@ public class ChatApplicationImpl implements ChatApplication{
 
     @Override
     public ChatRoom focusRoom(String roomId, String activeUser) {
-        RoomSession room = requireRoom(roomId);
-        // State pattern: focusing a room delegates the transition logic to the current state object.
+        RoomSession room = requireAccessibleRoom(roomId, activeUser);
         room.state().onRoomFocused(room);
         persistState();
-        return toChatRoom(room, resolveCanonicalUsername(activeUser).orElse(""));
+        return toChatRoom(room, requireCanonicalUser(activeUser));
     }
 
     @Override
-    public RoomStats roomStats(String roomId) {
-        RoomSession room = requireRoom(roomId);
+    public RoomStats roomStats(String roomId, String activeUser) {
+        RoomSession room = requireAccessibleRoom(roomId, activeUser);
         SequencedMap<String, Long> perUser = room.messages().stream()
                 .collect(Collectors.groupingBy(ChatMessage::user, LinkedHashMap::new, Collectors.counting()));
 
@@ -134,8 +146,10 @@ public class ChatApplicationImpl implements ChatApplication{
     }
 
     @Override
-    public List<UserMessageCount> topUsers() {
+    public List<UserMessageCount> topUsers(String activeUser) {
+        String canonicalUser = requireCanonicalUser(activeUser);
         return rooms.values().stream()
+                .filter(room -> room.participants().contains(canonicalUser))
                 .flatMap(room -> room.messages().stream())
                 .collect(Collectors.groupingBy(ChatMessage::user, Collectors.counting()))
                 .entrySet().stream()
@@ -278,6 +292,27 @@ public class ChatApplicationImpl implements ChatApplication{
         return candidate;
     }
 
+    private String nextUsername(String displayName) {
+        String normalized = Normalizer.normalize(displayName, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-|-$)", "");
+        String base = normalized.isBlank() ? "utilizador" : normalized;
+        String candidate = base;
+        int suffix = 2;
+        while (appUserRepository.findByUsernameIgnoreCase(candidate).isPresent()) {
+            candidate = base + suffix++;
+        }
+        return candidate;
+    }
+
+    private void ensureDisplayNameAvailable(String displayName) {
+        if (appUserRepository.findByDisplayNameIgnoreCase(displayName).isPresent()) {
+            throw new IllegalArgumentException("Já existe um utilizador com esse nome.");
+        }
+    }
+
     private AppUserEntity resolveExistingUser(String user) {
         return appUserRepository.findByUsernameIgnoreCase(user)
                 .or(() -> appUserRepository.findByDisplayNameIgnoreCase(user))
@@ -292,6 +327,20 @@ public class ChatApplicationImpl implements ChatApplication{
                 .map(AppUserEntity::getUsername)
                 .or(() -> appUserRepository.findByDisplayNameIgnoreCase(user)
                         .map(AppUserEntity::getUsername));
+    }
+
+    private String requireCanonicalUser(String activeUser) {
+        return resolveCanonicalUsername(activeUser)
+                .orElseThrow(() -> new IllegalArgumentException("Autentique-se para aceder às salas."));
+    }
+
+    private RoomSession requireAccessibleRoom(String roomId, String activeUser) {
+        RoomSession room = requireRoom(roomId);
+        String canonicalUser = requireCanonicalUser(activeUser);
+        if (!room.participants().contains(canonicalUser)) {
+            throw new IllegalArgumentException("Só pode ver conteúdo das salas às quais pertence.");
+        }
+        return room;
     }
 
     private ChatRoom toChatRoom(RoomSession room, String activeUser) {
@@ -345,7 +394,6 @@ public class ChatApplicationImpl implements ChatApplication{
     }
 
     private MessageValidationHandler buildValidationChain() {
-        // Chain of Responsibility: each handler validates one rule and delegates to the next one.
         MessageValidationHandler required = new RequiredFieldValidationHandler();
         required
                 .linkWith(new ParticipantValidationHandler(rooms))

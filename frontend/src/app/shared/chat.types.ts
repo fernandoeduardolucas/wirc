@@ -53,6 +53,12 @@ export interface AppUser {
   displayName: string;
 }
 
+export interface CreateUserPayload {
+  username: string;
+  displayName: string;
+  password: string;
+}
+
 export interface AppErrorDetails {
   roomId?: string;
   roomName?: string;
