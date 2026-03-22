@@ -1,17 +1,42 @@
 <section class="card section-stack">
   <div class="section-title">
-    <h2>Identidade</h2>
+    <h2>Utilizadores</h2>
     <span class="status">{{ authenticatedUser ? 'autenticado' : 'offline' }}</span>
   </div>
 
-  <p class="label">Utilizador ativo</p>
-  <div class="identity-current">{{ authenticatedUser || 'Sem identidade autenticada' }}</div>
+  <p class="label">Utilizador autenticado</p>
+  <div class="identity-current">{{ authenticatedUser || 'Sem sessão ativa' }}</div>
 
   <div class="card nested-panel section-stack compact-stack">
-    <p class="label">Credenciais</p>
-    <input [ngModel]="currentUser" (ngModelChange)="userSelected.emit($event)" placeholder="user" />
+    <p class="label">Entrar</p>
+    <input [ngModel]="currentUser" (ngModelChange)="userSelected.emit($event)" placeholder="utilizador ou nome" />
     <input [(ngModel)]="password" type="password" placeholder="password" (keydown.enter)="submitCredentials()" />
-    <small class="muted">A password é validada contra a base de dados.</small>
-    <button (click)="submitCredentials()">{{ authenticatedUser ? 'Reautenticar' : 'Autenticar-se' }}</button>
+    <div class="inline-form split-actions">
+      <button (click)="submitCredentials()">{{ authenticatedUser ? 'Reautenticar' : 'Autenticar-se' }}</button>
+      <button type="button" class="secondary-button" [disabled]="!authenticatedUser" (click)="signOutRequested.emit()">Sair</button>
+    </div>
+  </div>
+
+  <div class="card nested-panel section-stack compact-stack">
+    <p class="label">Criar utilizador</p>
+    <input [(ngModel)]="newDisplayName" placeholder="Nome visível" />
+    <input [(ngModel)]="newPassword" type="password" placeholder="Password inicial" (keydown.enter)="submitUserCreation()" />
+    <small class="muted">O nome criado passa a poder autenticar-se e ser adicionado a canais.</small>
+    <button (click)="submitUserCreation()">Criar utilizador</button>
+  </div>
+
+  <div class="card nested-panel section-stack compact-stack">
+    <div class="section-title compact-title">
+      <h3>Lista de utilizadores</h3>
+      <span class="muted">{{ users.length }}</span>
+    </div>
+
+    <div class="user-list-box">
+      @for (user of users; track user.username) {
+        <button class="list-chip" [class.active]="user.displayName === currentUser" (click)="userSelected.emit(user.displayName)">
+          {{ user.displayName }}
+        </button>
+      }
+    </div>
   </div>
 </section>

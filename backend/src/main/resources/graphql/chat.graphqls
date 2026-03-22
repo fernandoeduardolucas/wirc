@@ -1,14 +1,15 @@
 type Query {
   users: [AppUser!]!
   rooms(activeUser: String = ""): [ChatRoom!]!
-  messagesByRoom(roomId: String!): [ChatMessage!]!
-  searchMessages(term: String!): [ChatMessage!]!
-  roomStats(roomId: String!): RoomStats!
-  topUsers: [UserMessageCount!]!
+  messagesByRoom(roomId: String!, activeUser: String!): [ChatMessage!]!
+  searchMessages(term: String!, activeUser: String!): [ChatMessage!]!
+  roomStats(roomId: String!, activeUser: String!): RoomStats!
+  topUsers(activeUser: String!): [UserMessageCount!]!
 }
 
 type Mutation {
   signIn(user: String!, password: String!): AppUser!
+  createUser(displayName: String!, password: String!): AppUser!
   sendMessage(roomId: String!, user: String!, message: String!, focusedRoom: Boolean!): ChatMessage!
   focusRoom(roomId: String!, activeUser: String!): ChatRoom!
   createRoom(name: String!, activeUser: String!, participants: [String!]!): ChatRoom!

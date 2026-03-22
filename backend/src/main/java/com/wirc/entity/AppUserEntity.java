@@ -23,5 +23,9 @@ public class AppUserEntity {
     @Column(name = "password", nullable = false, length = 255)
     private String password;
 
-
+    public AppUserEntity(String username, String displayName, String password) {
+        this.username = username;
+        this.displayName = displayName;
+        this.password = password;
+    }
 }

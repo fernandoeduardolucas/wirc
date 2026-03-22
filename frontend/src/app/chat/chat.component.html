@@ -6,14 +6,22 @@
       </div>
       <div>
         <h2>{{ currentRoom.name }}</h2>
-        <p class="muted">{{ currentRoom.participants.length }} utilizadores ligados</p>
+        <p class="muted">{{ currentRoom.participants.length }} utilizadores no canal</p>
       </div>
       <div class="title-meta">{{ currentRoom.state }}</div>
     </header>
 
+    <section class="hero card compact-hero">
+      <div>
+        <p class="eyebrow">Chat</p>
+        <h2>{{ authenticatedUser }}</h2>
+        <p class="muted">Só consegue ler e escrever nas salas às quais pertence.</p>
+      </div>
+    </section>
+
     <div class="toolbar card nested-toolbar">
       <div>
-        <label class="label">Pesquisar no histórico</label>
+        <label class="label">Pesquisar no histórico visível</label>
         <div class="inline-form">
           <input [(ngModel)]="searchTerm" placeholder="texto a procurar..." (keydown.enter)="submitSearch()" />
           <button (click)="submitSearch()">Pesquisar</button>
@@ -37,7 +45,7 @@
       </div>
     }
 
-    <div class="chat-body">
+    <div class="chat-body single-column-body">
       <section class="messages-panel">
         @if (searchResults.length > 0) {
           <div class="search-results card nested-panel">
@@ -64,21 +72,24 @@
           }
         </ul>
       </section>
-
-      <app-canal
-        [room]="currentRoom"
-        [currentUser]="currentUser"
-        [authenticatedUser]="authenticatedUser"
-        [users]="users"
-        [topUsers]="topUsers"
-        (userSelected)="userSelected.emit($event)"
-        (memberAdded)="memberAdded.emit($event)"
-      />
     </div>
 
     <footer class="composer-box">
       <input [(ngModel)]="message" [placeholder]="'Escreva uma mensagem para ' + currentRoom.name" (keydown.enter)="submitMessage()" />
       <button (click)="submitMessage()">Enviar</button>
     </footer>
+  </section>
+} @else {
+  <section class="chat-window card empty-state-panel">
+    <header class="window-titlebar">
+      <div class="title-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <div>
+        <h2>Sem canal selecionado</h2>
+        <p class="muted">Escolha um canal da coluna direita.</p>
+      </div>
+      <div class="title-meta">Chat</div>
+    </header>
   </section>
 }
