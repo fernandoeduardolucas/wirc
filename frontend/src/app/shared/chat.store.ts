@@ -102,7 +102,14 @@ export class ChatStore implements OnDestroy {
   }
 
   selectUser(displayName: string): void {
-    this.currentUserSubject.next(displayName);
+    const normalizedDisplayName = displayName.trim();
+    const authenticatedUser = this.authenticatedUserSubject.value;
+
+    if (authenticatedUser && normalizedDisplayName !== authenticatedUser) {
+      return;
+    }
+
+    this.currentUserSubject.next(normalizedDisplayName);
   }
 
   authenticate(displayName: string, password: string): void {
@@ -183,15 +190,16 @@ export class ChatStore implements OnDestroy {
 
   sendMessage(message: string): void {
     const roomId = this.activeRoomIdSubject.value;
-    const user = this.currentUserSubject.value;
+    const activeUser = this.authenticatedUserSubject.value;
+    const user = activeUser || this.currentUserSubject.value;
     const normalized = message.trim();
 
-    if (!roomId || !user || !normalized) {
+    if (!roomId || !activeUser || !user || !normalized) {
       return;
     }
 
     try {
-      this.chatService.sendMessage(this.socket, roomId, user, normalized, true);
+      this.chatService.sendMessage(this.socket, roomId, activeUser, user, normalized, true);
       this.errorSubject.next(null);
     } catch (error) {
       this.handleError(error as Error, null).subscribe();

@@ -51,6 +51,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                     session.getId(), command.roomId(), command.user(), command.focusedRoom());
             chatApplication.sendMessage(new ChatCommand(
                     command.roomId(),
+                    command.activeUser(),
                     command.user(),
                     command.message(),
                     command.focusedRoom()

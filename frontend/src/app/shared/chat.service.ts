@@ -142,8 +142,8 @@ export class ChatService {
     return socket;
   }
 
-  sendMessage(socket: WebSocket | undefined, roomId: string, user: string, message: string, focusedRoom: boolean): void {
-    const payload: OutboundChatMessage = { type: 'SEND_MESSAGE', roomId, user, message, focusedRoom };
+  sendMessage(socket: WebSocket | undefined, roomId: string, activeUser: string, user: string, message: string, focusedRoom: boolean): void {
+    const payload: OutboundChatMessage = { type: 'SEND_MESSAGE', roomId, activeUser, user, message, focusedRoom };
     if (!socket || socket.readyState === WebSocket.CONNECTING) {
       this.pendingSocketMessages.push(payload);
       return;

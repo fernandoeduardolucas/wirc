@@ -9,7 +9,7 @@
 
   <div class="card nested-panel section-stack compact-stack">
     <p class="label">Entrar</p>
-    <input [ngModel]="currentUser" (ngModelChange)="userSelected.emit($event)" placeholder="utilizador ou nome" />
+    <input [ngModel]="currentUser" (ngModelChange)="userSelected.emit($event)" placeholder="utilizador ou nome" [disabled]="!!authenticatedUser" />
     <input [(ngModel)]="password" type="password" placeholder="password" (keydown.enter)="submitCredentials()" />
     <div class="inline-form split-actions">
       <button (click)="submitCredentials()">{{ authenticatedUser ? 'Reautenticar' : 'Autenticar-se' }}</button>
@@ -34,7 +34,7 @@
     @if (authenticatedUser) {
       <div class="user-list-box">
         @for (user of users; track user.username) {
-          <button class="list-chip" [class.active]="user.displayName === currentUser" (click)="userSelected.emit(user.displayName)">
+          <button class="list-chip" [class.active]="user.displayName === currentUser" [disabled]="!!authenticatedUser && user.displayName !== authenticatedUser" (click)="userSelected.emit(user.displayName)">
             {{ user.displayName }}
           </button>
         }

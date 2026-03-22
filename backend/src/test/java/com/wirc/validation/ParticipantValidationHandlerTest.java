@@ -21,7 +21,7 @@ class ParticipantValidationHandlerTest {
                 new RoomSession("room-ana-bruno", "Ana & Bruno", new FocusedRoomState(), List.of("ana", "bruno"))
         ));
 
-        handler.validate(new ChatCommand("room-ana-bruno", "ana", "Olá", true));
+        handler.validate(new ChatCommand("room-ana-bruno", "ana", "ana", "Olá", true));
     }
 
     @Test
@@ -31,7 +31,7 @@ class ParticipantValidationHandlerTest {
                 new RoomSession("room-ana-bruno", "Ana & Bruno", new FocusedRoomState(), List.of("ana", "bruno"))
         ));
 
-        assertThatThrownBy(() -> handler.validate(new ChatCommand("room-ana-bruno", "eva", "Olá", true)))
+        assertThatThrownBy(() -> handler.validate(new ChatCommand("room-ana-bruno", "eva", "eva", "Olá", true)))
                 .isInstanceOf(ChatValidationException.class)
                 .hasMessage("O utilizador selecionado não pertence a esta sala.")
                 .satisfies(error -> {

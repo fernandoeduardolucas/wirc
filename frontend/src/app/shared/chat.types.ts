@@ -43,6 +43,7 @@ export interface ChatNotification {
 export interface OutboundChatMessage {
   type: 'SEND_MESSAGE';
   roomId: string;
+  activeUser: string;
   user: string;
   message: string;
   focusedRoom: boolean;

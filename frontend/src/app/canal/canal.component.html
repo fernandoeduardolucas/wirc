@@ -13,6 +13,7 @@
         <button
           class="list-chip"
           [class.active]="participant === currentUser"
+          [disabled]="!!authenticatedUser && participant !== authenticatedUser"
           (click)="userSelected.emit(participant)"
         >
           {{ participant }}

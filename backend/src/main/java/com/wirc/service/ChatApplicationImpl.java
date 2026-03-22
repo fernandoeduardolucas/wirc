@@ -207,8 +207,13 @@ public class ChatApplicationImpl implements ChatApplication {
     private ChatCommand validateCommand(ChatCommand command) {
         String canonicalUsername = resolveCanonicalUsername(command.user())
                 .orElseThrow(() -> new IllegalArgumentException("Utilizador não encontrado: " + command.user()));
+        String canonicalActiveUser = requireCanonicalUser(command.activeUser());
+        if (!canonicalActiveUser.equals(canonicalUsername)) {
+            throw new IllegalArgumentException("Só o utilizador autenticado pode enviar mensagens em seu nome.");
+        }
         ChatCommand validatedCommand = new ChatCommand(
                 command.roomId(),
+                canonicalActiveUser,
                 canonicalUsername,
                 command.message(),
                 command.focusedRoom());
