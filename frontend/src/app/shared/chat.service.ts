@@ -19,7 +19,10 @@ export class ChatService {
   private readonly websocketEndpoint = 'ws://localhost:8080/ws/chat';
   private readonly pendingSocketMessages: OutboundChatMessage[] = [];
 
-  loadUsers(_activeUser: string): Observable<AppUser[]> {
+  loadUsers(activeUser: string): Observable<AppUser[]> {
+    if (!activeUser) {
+      return of([]);
+    }
     return defer(() => from(this.runQuery<{ users: AppUser[] }>('query { users { username displayName } }').then((r) => r.data?.users ?? [])));
   }
 

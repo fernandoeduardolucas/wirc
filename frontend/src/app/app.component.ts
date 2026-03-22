@@ -83,6 +83,7 @@ import { ChatRoom } from './shared/chat.types';
           </section>
         }
 
+        @if (vm.authenticatedUser) {
         <app-rooms
           [rooms]="vm.rooms"
           [activeRoomId]="vm.activeRoomId"
@@ -91,6 +92,15 @@ import { ChatRoom } from './shared/chat.types';
           (roomSelected)="store.selectRoom($event)"
           (roomCreated)="store.createRoom($event.name, $event.participants)"
         />
+        } @else {
+          <section class="card section-stack empty-side-panel">
+            <div class="section-title">
+              <h2>Salas</h2>
+              <span class="muted">indisponíveis</span>
+            </div>
+            <p class="muted">A lista de salas e a criação de novos canais só ficam visíveis após autenticação com sucesso.</p>
+          </section>
+        }
 
       </aside>
     </div>
