@@ -387,6 +387,11 @@ button:hover {
   margin: 0;
 }
 
+.room-name {
+  margin-top: 4px;
+  font-size: 0.92rem;
+}
+
 .checkbox-list {
   display: grid;
   gap: 8px;
