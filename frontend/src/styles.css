@@ -188,6 +188,8 @@ button:hover {
 
 .chat-window {
   min-height: calc(100vh - 36px);
+  display: flex;
+  flex-direction: column;
 }
 
 .window-titlebar {
@@ -231,6 +233,9 @@ button:hover {
 
 .messages-panel {
   min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .messages-scroll {
@@ -421,11 +426,13 @@ button:hover {
   grid-template-columns: minmax(0, 1fr) 300px;
   gap: 14px;
   min-height: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .messages {
   list-style: none;
-  padding: 0;
+  padding: 0 0 4px;
   margin: 0;
   display: grid;
   gap: 10px;
@@ -454,6 +461,11 @@ button:hover {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 8px;
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  padding-top: 12px;
+  background: linear-gradient(180deg, rgba(11, 15, 24, 0), rgba(11, 15, 24, 0.9) 24%, rgba(11, 15, 24, 1) 100%);
 }
 
 .toolbar-stats {
