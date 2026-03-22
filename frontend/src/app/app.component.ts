@@ -62,8 +62,8 @@ import { ChatRoom } from './shared/chat.types';
         }
       </main>
 
+      @if (vm.authenticatedUser) {
       <aside class="channel-column">
-        @if (vm.authenticatedUser) {
         <app-canal
           [room]="activeRoom(vm.rooms, vm.activeRoomId)"
           [currentUser]="vm.currentUser"
@@ -73,17 +73,7 @@ import { ChatRoom } from './shared/chat.types';
           (userSelected)="store.selectUser($event)"
           (memberAdded)="store.addMemberToActiveRoom($event)"
         />
-        } @else {
-          <section class="card section-stack empty-side-panel">
-            <div class="section-title">
-              <h2>Sala</h2>
-              <span class="muted">indisponível</span>
-            </div>
-            <p class="muted">O lado direito só fica disponível depois de autenticar um utilizador.</p>
-          </section>
-        }
 
-        @if (vm.authenticatedUser) {
         <app-rooms
           [rooms]="vm.rooms"
           [activeRoomId]="vm.activeRoomId"
@@ -92,17 +82,8 @@ import { ChatRoom } from './shared/chat.types';
           (roomSelected)="store.selectRoom($event)"
           (roomCreated)="store.createRoom($event.name, $event.participants)"
         />
-        } @else {
-          <section class="card section-stack empty-side-panel">
-            <div class="section-title">
-              <h2>Salas</h2>
-              <span class="muted">indisponíveis</span>
-            </div>
-            <p class="muted">A lista de salas e a criação de novos canais só ficam visíveis após autenticação com sucesso.</p>
-          </section>
-        }
-
       </aside>
+      }
     </div>
     }
   `
