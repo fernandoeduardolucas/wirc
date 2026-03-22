@@ -212,7 +212,7 @@ export class ChatStore implements OnDestroy {
         return;
       }
       this.activeRoomIdSubject.next(room.id);
-      this.notificationSubject.next(`Canal criado: ${room.name}`);
+      this.notificationSubject.next(`Sala criada: ${room.name}`);
       this.refresh();
     });
   }
@@ -221,7 +221,7 @@ export class ChatStore implements OnDestroy {
     const roomId = this.activeRoomIdSubject.value;
     const activeUser = this.authenticatedUserSubject.value;
     if (!roomId || !activeUser) {
-      this.errorSubject.next({ message: 'Selecione um canal e assuma uma identidade antes de adicionar membros.' });
+      this.errorSubject.next({ message: 'Selecione uma sala e assuma uma identidade antes de adicionar utilizadores.' });
       return;
     }
 
@@ -231,7 +231,7 @@ export class ChatStore implements OnDestroy {
       if (!room) {
         return;
       }
-      this.notificationSubject.next(`Membro adicionado ao canal ${room.name}.`);
+      this.notificationSubject.next(`Utilizador adicionado à sala ${room.name}.`);
       this.refresh();
     });
   }
