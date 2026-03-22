@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 @Service
 // Facade pattern: this service exposes a single entry point for the chat application use cases.
 public class ChatApplicationFacade {
+
+
     private static final List<String> HIGHLIGHT_KEYWORDS = List.of("graphql", "websocket");
 
     private final Map<String, RoomSession> rooms = new ConcurrentHashMap<>();
@@ -57,20 +59,6 @@ public class ChatApplicationFacade {
         this.chatRoomRepository = chatRoomRepository;
         loadRooms(roomFactory, databaseChatRoomLoader);
         this.validationChain = buildValidationChain();
-    }
-
-    private void loadRooms(ChatRoomFactory roomFactory, DatabaseChatRoomLoader databaseChatRoomLoader) {
-        databaseChatRoomLoader.loadRooms()
-                .forEach(snapshot -> rooms.put(snapshot.id(), roomFactory.createFromSnapshot(snapshot)));
-    }
-
-    private MessageValidationHandler buildValidationChain() {
-        // Chain of Responsibility: each handler validates one rule and delegates to the next one.
-        MessageValidationHandler required = new RequiredFieldValidationHandler();
-        required
-                .linkWith(new ParticipantValidationHandler(rooms))
-                .linkWith(new MessageLengthValidationHandler());
-        return required;
     }
 
     public List<AppUser> users() {
@@ -345,5 +333,19 @@ public class ChatApplicationFacade {
                         Function.identity(),
                         (left, right) -> left,
                         LinkedHashMap::new));
+    }
+
+    private void loadRooms(ChatRoomFactory roomFactory, DatabaseChatRoomLoader databaseChatRoomLoader) {
+        databaseChatRoomLoader.loadRooms()
+                .forEach(snapshot -> rooms.put(snapshot.id(), roomFactory.createFromSnapshot(snapshot)));
+    }
+
+    private MessageValidationHandler buildValidationChain() {
+        // Chain of Responsibility: each handler validates one rule and delegates to the next one.
+        MessageValidationHandler required = new RequiredFieldValidationHandler();
+        required
+                .linkWith(new ParticipantValidationHandler(rooms))
+                .linkWith(new MessageLengthValidationHandler());
+        return required;
     }
 }

@@ -18,6 +18,7 @@ import java.util.List;
 @Controller
 @RequiredArgsConstructor
 public class WircController {
+
     private final ChatApplicationFacade chatFacade;
 
     @QueryMapping
