@@ -84,3 +84,8 @@ Envie o seguinte JSON para `ws://localhost:8080/ws/chat`:
   "focusedRoom": true
 }
 ```
+
+
+## Relatório técnico
+
+- Documento completo em `docs/RELATORIO.md`.
