@@ -64,11 +64,12 @@ public class WircController {
     @MutationMapping
     public ChatMessage sendMessage(
             @Argument String roomId,
+            @Argument String activeUser,
             @Argument String user,
             @Argument String message,
             @Argument boolean focusedRoom
     ) {
-        return chatApplication.sendMessage(new ChatCommand(roomId, user, message, focusedRoom));
+        return chatApplication.sendMessage(new ChatCommand(roomId, activeUser, user, message, focusedRoom));
     }
 
     @MutationMapping

@@ -38,7 +38,7 @@ class BackendApplicationTests {
 
     @Test
     void sendsMessageUsingDisplayNameByPersistingCanonicalUsername() {
-        chatApplicationFacade.sendMessage(new ChatCommand("room-equipa", "Ana", "Olá websocket", false));
+        chatApplicationFacade.sendMessage(new ChatCommand("room-equipa", "Ana", "Ana", "Olá websocket", false));
 
         assertThat(chatApplicationFacade.messagesByRoom("room-equipa", "Ana"))
                 .extracting(message -> message.user() + ":" + message.message())
