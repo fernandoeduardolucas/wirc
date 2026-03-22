@@ -25,22 +25,20 @@
     <button (click)="submitUserCreation()">Criar utilizador</button>
   </div>
 
+  @if (authenticatedUser) {
   <div class="card nested-panel section-stack compact-stack">
     <div class="section-title compact-title">
       <h3>Lista de utilizadores</h3>
-      <span class="muted">{{ authenticatedUser ? users.length : 'bloqueada' }}</span>
+      <span class="muted">{{ users.length }}</span>
     </div>
 
-    @if (authenticatedUser) {
-      <div class="user-list-box">
-        @for (user of users; track user.username) {
-          <button class="list-chip" [class.active]="user.displayName === currentUser" [disabled]="!!authenticatedUser && user.displayName !== authenticatedUser" (click)="userSelected.emit(user.displayName)">
-            {{ user.displayName }}
-          </button>
-        }
-      </div>
-    } @else {
-      <p class="muted">Os utilizadores existentes só ficam visíveis depois de autenticar com sucesso.</p>
-    }
+    <div class="user-list-box">
+      @for (user of users; track user.username) {
+        <button class="list-chip" [class.active]="user.displayName === currentUser" [disabled]="user.displayName !== authenticatedUser" (click)="userSelected.emit(user.displayName)">
+          {{ user.displayName }}
+        </button>
+      }
+    </div>
   </div>
+  }
 </section>
