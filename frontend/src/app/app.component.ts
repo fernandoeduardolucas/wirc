@@ -14,8 +14,9 @@ import { ChatRoom } from './shared/chat.types';
   imports: [CommonModule, ChatComponent, IdentityComponent, RoomsComponent, CanalComponent],
   template: `
     @if (vm$ | async; as vm) {
-    <div class="shell three-column-shell">
-      <aside class="user-column">
+    <div class="app-shell container-fluid py-3">
+      <div class="row g-3 shell three-column-shell">
+      <aside class="user-column col-12 col-xl-3">
         <div class="brand card">
           <img class="brand-logo" [src]="wircLogo" alt="WIRC logo" />
 
@@ -36,7 +37,7 @@ import { ChatRoom } from './shared/chat.types';
         />
       </aside>
 
-      <main class="chat-column">
+      <main class="chat-column col-12 col-xl-6">
         @if (vm.authenticatedUser) {
         <app-chat
           [room]="activeRoom(vm.rooms, vm.activeRoomId)"
@@ -63,7 +64,7 @@ import { ChatRoom } from './shared/chat.types';
       </main>
 
       @if (vm.authenticatedUser) {
-      <aside class="channel-column">
+      <aside class="channel-column col-12 col-xl-3">
         <app-canal
           [room]="activeRoom(vm.rooms, vm.activeRoomId)"
           [currentUser]="vm.currentUser"
@@ -84,6 +85,7 @@ import { ChatRoom } from './shared/chat.types';
         />
       </aside>
       }
+      </div>
     </div>
     }
   `
