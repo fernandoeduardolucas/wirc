@@ -152,6 +152,7 @@ A interface `ChatApplication` e a implementação `ChatApplicationImpl` concentr
 ### 4.5 Camada de persistência
 O acesso à base de dados é feito com repositórios JPA e entidades persistentes. O estado das salas e respetivas mensagens é reconstruído a partir da base de dados e snapshots persistidos.
 
+
 ### 4.6 Modelo ER da base de dados
 O modelo de dados persistente organiza-se em torno de utilizadores, salas, associação de membros, mensagens e estado de sessão da sala. Abaixo apresenta-se uma visão ER simplificada alinhada com as entidades JPA e os scripts Liquibase.
 
@@ -520,6 +521,7 @@ A solução usa as duas tecnologias de forma complementar:
 - **WebSocket**: envio e propagação imediata de mensagens/notificações.
 
 Esta separação melhora a clareza da arquitetura e cumpre o objetivo do projeto de combinar consulta estruturada com comunicação em tempo real.
+
 
 ## 5. Design patterns utilizados
 
