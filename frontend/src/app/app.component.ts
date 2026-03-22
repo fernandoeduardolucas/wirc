@@ -85,7 +85,7 @@ import { ChatRoom } from './shared/chat.types';
         } @else {
         <section class="card section-stack empty-side-panel">
           <div class="section-title">
-            <h2>Canal</h2>
+            <h2>Sala</h2>
             <span class="muted">indisponível</span>
           </div>
           <p class="muted">O lado direito só fica disponível depois de autenticar um utilizador.</p>

@@ -22,10 +22,10 @@
 
   <div class="card nested-panel section-stack compact-stack">
     <div class="section-title compact-title">
-      <h3>Novo canal</h3>
+      <h3>Nova sala</h3>
       <span class="muted">{{ authenticatedUser || 'autenticação necessária' }}</span>
     </div>
-    <input [(ngModel)]="newRoomName" placeholder="Nome do canal" />
+    <input [(ngModel)]="newRoomName" placeholder="Nome da sala" />
     <div class="checkbox-list">
       @for (user of users; track user.username) {
         <label class="checkbox-item">
@@ -38,6 +38,6 @@
         </label>
       }
     </div>
-    <button [disabled]="!authenticatedUser" (click)="submitRoom()">Criar canal</button>
+    <button [disabled]="!authenticatedUser" (click)="submitRoom()">Criar sala</button>
   </div>
 </section>

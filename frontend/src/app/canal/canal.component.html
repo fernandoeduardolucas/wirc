@@ -1,8 +1,8 @@
 @if (room) {
   <aside class="people-panel card nested-panel">
     <div class="section-title compact-title">
-      <h3>Canal</h3>
-      <span class="muted">{{ room.participants.length }} users</span>
+      <h3>Sala</h3>
+      <span class="muted">{{ room.participants.length }} utilizadores</span>
     </div>
 
     <div class="participant-list">
@@ -19,7 +19,7 @@
 
     @if (room.canManageMembers) {
       <div class="card mini-stats section-stack compact-stack">
-        <h3>Adicionar membro</h3>
+        <h3>Adicionar utilizador</h3>
         <select [(ngModel)]="selectedMember">
           <option value="">Escolha um utilizador</option>
           @for (user of users; track user.username) {
@@ -28,7 +28,7 @@
             }
           }
         </select>
-        <button [disabled]="!authenticatedUser || !selectedMember" (click)="addMember()">Adicionar ao canal</button>
+        <button [disabled]="!authenticatedUser || !selectedMember" (click)="addMember()">Adicionar à sala</button>
       </div>
     }
 

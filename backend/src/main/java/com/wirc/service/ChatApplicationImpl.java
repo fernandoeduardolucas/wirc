@@ -163,7 +163,7 @@ public class ChatApplicationImpl implements ChatApplication {
     @Transactional
     public ChatRoom createRoom(String name, String activeUser, List<String> participants) {
         AppUserEntity actor = resolveExistingUser(activeUser);
-        String roomName = requireText(name, "Nome do canal obrigatório.");
+        String roomName = requireText(name, "Nome da sala obrigatório.");
         LinkedHashMap<String, String> canonicalParticipants = resolveCanonicalParticipants(actor, participants);
 
         String roomId = nextRoomId(roomName);
@@ -283,7 +283,7 @@ public class ChatApplicationImpl implements ChatApplication {
                 .toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("(^-|-$)", "");
-        String base = normalized.isBlank() ? "canal" : normalized;
+        String base = normalized.isBlank() ? "sala" : normalized;
         String candidate = "room-" + base;
         int suffix = 2;
         while (rooms.containsKey(candidate)) {
@@ -360,7 +360,7 @@ public class ChatApplicationImpl implements ChatApplication {
 
     private void ensureUserCanManageRoom(RoomSession room, AppUserEntity actor) {
         if (!room.participants().contains(actor.getUsername())) {
-            throw new IllegalArgumentException("Só membros do canal podem adicionar novos membros.");
+            throw new IllegalArgumentException("Só utilizadores da sala podem adicionar novos utilizadores.");
         }
     }
 
