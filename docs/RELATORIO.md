@@ -152,7 +152,376 @@ A interface `ChatApplication` e a implementação `ChatApplicationImpl` concentr
 ### 4.5 Camada de persistência
 O acesso à base de dados é feito com repositórios JPA e entidades persistentes. O estado das salas e respetivas mensagens é reconstruído a partir da base de dados e snapshots persistidos.
 
+
+### 4.6 Modelo ER da base de dados
+O modelo de dados persistente organiza-se em torno de utilizadores, salas, associação de membros, mensagens e estado de sessão da sala. Abaixo apresenta-se uma visão ER simplificada alinhada com as entidades JPA e os scripts Liquibase.
+
+```mermaid
+erDiagram
+    APP_USER ||--o{ CHAT_ROOM_MEMBER : participa
+    CHAT_ROOM ||--o{ CHAT_ROOM_MEMBER : contem
+    CHAT_ROOM ||--o{ CHAT_MESSAGE : possui
+    APP_USER ||--o{ CHAT_MESSAGE : envia
+    CHAT_ROOM ||--|| ROOM_SESSION_STATE : estado_atual
+
+    APP_USER {
+        string username PK
+        string display_name
+        string password
+    }
+
+    CHAT_ROOM {
+        string id PK
+        string name
+    }
+
+    CHAT_ROOM_MEMBER {
+        string room_id PK, FK
+        string username PK, FK
+    }
+
+    CHAT_MESSAGE {
+        string id PK
+        string room_id FK
+        string username FK
+        string message
+        datetime sent_at
+        boolean highlighted
+    }
+
+    ROOM_SESSION_STATE {
+        string room_id PK, FK
+        string state
+        long unread_messages
+    }
+```
+
+### 4.7 Diagrama de classes da solução
+O diagrama seguinte resume as classes mais relevantes do domínio e da integração aplicacional. O objetivo não é representar todos os ficheiros do projeto, mas destacar as dependências e responsabilidades principais.
+
+```mermaid
+classDiagram
+    class AppComponent
+    class ChatStore
+    class ChatService
+    class WircController
+    class ChatWebSocketHandler
+    class ChatApplication
+    class ChatApplicationImpl
+    class ChatRoomFactory
+    class MessageValidationHandler
+    class RequiredFieldValidationHandler
+    class ParticipantValidationHandler
+    class MessageLengthValidationHandler
+    class RoomSession
+    class RoomState
+    class FocusedRoomState
+    class NotifiedRoomState
+    class WebSocketNotificationGateway
+    class ChatRoomEntity
+    class AppUserEntity
+    class ChatMessageEntity
+    class ChatRoomMemberEntity
+    class RoomSessionStateEntity
+
+    AppComponent --> ChatStore : consome estado
+    ChatStore --> ChatService : invoca API
+    ChatStore --> ChatService : abre WebSocket
+    WircController --> ChatApplication : delega queries/mutations
+    ChatWebSocketHandler --> ChatApplication : delega envio
+    ChatWebSocketHandler --> WebSocketNotificationGateway : gere sessoes
+    ChatApplication <|.. ChatApplicationImpl
+    ChatApplicationImpl --> ChatRoomFactory : recria salas
+    ChatApplicationImpl --> MessageValidationHandler : valida comandos
+    MessageValidationHandler <|-- RequiredFieldValidationHandler
+    MessageValidationHandler <|-- ParticipantValidationHandler
+    MessageValidationHandler <|-- MessageLengthValidationHandler
+    ChatApplicationImpl --> RoomSession : gere estado em memoria
+    RoomSession --> RoomState : delega comportamento
+    RoomState <|.. FocusedRoomState
+    RoomState <|.. NotifiedRoomState
+    ChatApplicationImpl --> ChatRoomEntity : persiste salas
+    ChatApplicationImpl --> AppUserEntity : persiste utilizadores
+    ChatApplicationImpl --> ChatMessageEntity : persiste mensagens
+    ChatRoomEntity --> ChatRoomMemberEntity : membros
+    ChatRoomMemberEntity --> AppUserEntity : utilizador
+    RoomSessionStateEntity --> ChatRoomEntity : estado de leitura
+```
+
+### 4.8 Diagrama de fluxo do utilizador
+O fluxo seguinte representa a jornada principal do utilizador desde a autenticação até à interação em tempo real com as salas de chat.
+
+```mermaid
+flowchart TD
+    A[Entrar na aplicação] --> B{Já tem conta?}
+    B -->|Sim| C[Autenticar com utilizador e password]
+    B -->|Não| D[Criar utilizador]
+    D --> E[Autenticação automática]
+    C --> F[Listar salas disponíveis]
+    E --> F
+    F --> G[Selecionar sala]
+    G --> H[Carregar mensagens e estatísticas]
+    H --> I{Ação pretendida}
+    I -->|Enviar mensagem| J[Enviar comando por WebSocket]
+    J --> K[Back-end valida e persiste]
+    K --> L[Difundir notificação e atualizar interface]
+    L --> I
+    I -->|Pesquisar mensagens| M[Executar query GraphQL]
+    M --> N[Mostrar resultados]
+    N --> I
+    I -->|Criar sala| O[Mutation GraphQL createRoom]
+    O --> P[Atualizar lista de salas]
+    P --> I
+    I -->|Adicionar membro| Q[Mutation GraphQL addMemberToRoom]
+    Q --> R[Atualizar participantes e permissões]
+    R --> I
+```
+
 ---
+
+## 4.9 Utilização do WebSocket na aplicação
+
+O WebSocket é usado exclusivamente para a componente **tempo real** da aplicação, isto é, para o envio de mensagens e para a difusão imediata de notificações para todos os clientes ligados. No front-end, a ligação é aberta para `ws://localhost:8080/ws/chat`. No back-end, esse endpoint é registado na configuração WebSocket e tratado por `ChatWebSocketHandler`.
+
+### Como o fluxo funciona
+1. O front-end abre a ligação WebSocket quando a `ChatStore` é construída.
+2. O servidor conclui o handshake, regista a sessão no gateway e envia uma mensagem inicial do tipo `CONNECTED`.
+3. Quando o utilizador envia uma mensagem, o Angular envia um payload JSON do tipo `SEND_MESSAGE`.
+4. O `ChatWebSocketHandler` recebe o payload, converte-o para `WebSocketChatCommand` e delega o processamento em `ChatApplication`.
+5. O serviço valida a mensagem, persiste o estado, cria a notificação e pede ao `WebSocketNotificationGateway` para a difundir.
+6. Todos os clientes com socket aberto recebem a notificação `NEW_MESSAGE`.
+
+### Contrato de entrada do WebSocket
+O cliente envia mensagens JSON com a seguinte estrutura:
+
+```json
+{
+  "type": "SEND_MESSAGE",
+  "roomId": "room-equipa",
+  "activeUser": "Ana",
+  "user": "Ana",
+  "message": "Bruno, valida o endpoint GraphQL comigo.",
+  "focusedRoom": true
+}
+```
+
+**Significado dos campos:**
+- `type`: tipo do comando WebSocket; atualmente a aplicação aceita `SEND_MESSAGE`.
+- `roomId`: identificador da sala onde a mensagem será enviada.
+- `activeUser`: utilizador autenticado no cliente.
+- `user`: utilizador em cujo nome a mensagem é enviada.
+- `message`: conteúdo textual da mensagem.
+- `focusedRoom`: indica se a sala está atualmente em foco no cliente emissor.
+
+### Contrato de saída do WebSocket
+Depois de processar uma mensagem, o servidor envia notificações JSON como as seguintes:
+
+```json
+{
+  "roomId": "room-equipa",
+  "roomName": "Equipa",
+  "preview": "Bruno, valida o endpoint GraphQL comigo.",
+  "user": "Ana",
+  "type": "NEW_MESSAGE",
+  "messageId": "<uuid>",
+  "sentAt": "2026-03-22T15:00:00Z",
+  "highlighted": true
+}
+```
+
+Além disso, no arranque da ligação o cliente recebe uma mensagem deste género:
+
+```json
+{
+  "type": "CONNECTED",
+  "preview": "Ligação websocket estabelecida.",
+  "highlighted": false
+}
+```
+
+Se existir erro de validação ou payload inválido, o servidor responde com uma mensagem do tipo `ERROR`.
+
+### Exemplo prático com Ana e Bruno
+Considere o seguinte cenário:
+- A **Ana** e o **Bruno** estão ligados à aplicação.
+- Ambos abriram a sala `room-equipa`.
+- A Ana envia a mensagem: `Bruno, valida o endpoint GraphQL comigo.`
+
+#### O que acontece no front-end
+1. A `ChatStore` da Ana chama `chatService.sendMessage(...)`.
+2. O `ChatService` envia o JSON `SEND_MESSAGE` pelo socket.
+3. O back-end processa a mensagem.
+4. O gateway difunde a notificação para a sessão da Ana e para a sessão do Bruno.
+5. O front-end recebe o evento e atualiza mensagens, estatísticas, top utilizadores e estado das salas.
+
+#### Exemplo representativo dos logs do back-end
+Os valores de `sessionId` e `messageId` variam em cada execução, mas o formato observado nos logs será semelhante a este:
+
+```text
+INFO  WebSocket handshake concluído: sessionId=ana-session, remoteAddress=/127.0.0.1:53001, uri=ws://localhost:8080/ws/chat
+INFO  Sessão WebSocket registada: sessionId=ana-session, totalSessoes=1
+INFO  Mensagem CONNECTED enviada após handshake: sessionId=ana-session
+
+INFO  WebSocket handshake concluído: sessionId=bruno-session, remoteAddress=/127.0.0.1:53002, uri=ws://localhost:8080/ws/chat
+INFO  Sessão WebSocket registada: sessionId=bruno-session, totalSessoes=2
+INFO  Mensagem CONNECTED enviada após handshake: sessionId=bruno-session
+
+INFO  Mensagem WebSocket recebida: sessionId=ana-session, payload={"type":"SEND_MESSAGE","roomId":"room-equipa","activeUser":"Ana","user":"Ana","message":"Bruno, valida o endpoint GraphQL comigo.","focusedRoom":true}
+INFO  Encaminhando mensagem entre utilizadores: sessionId=ana-session, roomId=room-equipa, user=Ana, focusedRoom=true
+INFO  Processando mensagem entre utilizadores: roomId=room-equipa, roomName=Equipa, user=Ana, focusedRoom=true, messageLength=41
+INFO  Broadcast WebSocket de mensagem: type=NEW_MESSAGE, roomId=room-equipa, roomName=Equipa, user=Ana, messageId=<uuid>, highlighted=true, sessoesAbertas=2
+INFO  Mensagem persistida e difundida: roomId=room-equipa, messageId=<uuid>, user=Ana, highlighted=true
+```
+
+### Porque é que `highlighted` pode surgir como `true`
+No serviço de aplicação, uma mensagem fica marcada como destacada quando contém palavras-chave como `graphql` ou `websocket`. No exemplo acima, a mensagem contém a palavra `GraphQL`, pelo que a notificação resultante pode surgir com `highlighted=true`.
+
+### Vantagens desta abordagem
+- O envio de mensagens acontece sem polling.
+- Todos os clientes recebem a atualização quase em tempo real.
+- A lógica de receção e broadcast fica centralizada no back-end.
+- O front-end separa bem operações reativas (WebSocket) de operações de consulta/gestão (GraphQL).
+
+## 4.10 Endpoint GraphQL, contratos e forma de utilização
+
+A API GraphQL da aplicação está disponível em `http://localhost:8080/graphql`. O front-end usa sempre pedidos `POST` com `Content-Type: application/json`, enviando um corpo com o formato:
+
+```json
+{
+  "query": "query($activeUser: String!) { rooms(activeUser: $activeUser) { id name participants state unreadMessages canManageMembers } }",
+  "variables": {
+    "activeUser": "Ana"
+  }
+}
+```
+
+### Estrutura geral do contrato GraphQL
+O schema define dois grandes grupos de operações:
+- `Query`: operações de leitura.
+- `Mutation`: operações que alteram o estado da aplicação.
+
+### Queries disponíveis
+
+#### `users`
+Lista os utilizadores conhecidos pela aplicação.
+
+#### `rooms(activeUser: String!)`
+Devolve apenas as salas acessíveis ao utilizador autenticado. O front-end usa esta query para montar a barra lateral de canais.
+
+#### `messagesByRoom(roomId: String!, activeUser: String!)`
+Obtém o histórico de mensagens de uma sala. É chamada quando o utilizador seleciona uma sala.
+
+#### `searchMessages(term: String!, activeUser: String!)`
+Pesquisa mensagens nas salas às quais o utilizador pertence.
+
+#### `roomStats(roomId: String!, activeUser: String!)`
+Obtém estatísticas agregadas da sala, como total de mensagens, mensagens destacadas e utilizador mais ativo.
+
+#### `topUsers(activeUser: String!)`
+Calcula o top 3 de utilizadores com mais mensagens nas salas visíveis para o utilizador atual.
+
+### Mutations disponíveis
+
+#### `signIn(user: String!, password: String!)`
+Autentica um utilizador e devolve os seus dados básicos.
+
+#### `createUser(displayName: String!, password: String!)`
+Cria um novo utilizador e devolve o utilizador criado.
+
+#### `sendMessage(...)`
+Existe no schema, mas nesta aplicação o envio principal de mensagens é feito por **WebSocket**, para garantir comportamento em tempo real. A mutation mantém o contrato do domínio e pode servir como extensão futura ou fallback.
+
+#### `focusRoom(roomId: String!, activeUser: String!)`
+Atualiza o estado da sala quando o utilizador a coloca em foco, limpando contadores de leitura quando aplicável.
+
+#### `createRoom(name: String!, activeUser: String!, participants: [String!]!)`
+Cria uma nova sala e define os participantes iniciais.
+
+#### `addMemberToRoom(roomId: String!, member: String!, activeUser: String!)`
+Adiciona um utilizador a uma sala existente, desde que o utilizador autenticado tenha permissão para isso.
+
+### Tipos principais do contrato
+
+#### `AppUser`
+Representa o utilizador devolvido ao front-end:
+- `username`
+- `displayName`
+
+#### `ChatRoom`
+Representa a sala listada na interface:
+- `id`
+- `name`
+- `participants`
+- `state`
+- `unreadMessages`
+- `canManageMembers`
+
+#### `ChatMessage`
+Representa cada mensagem do histórico:
+- `id`
+- `roomId`
+- `user`
+- `message`
+- `sentAt`
+- `highlighted`
+
+#### `RoomStats`
+Representa os indicadores estatísticos de uma sala:
+- `roomId`
+- `roomName`
+- `totalMessages`
+- `highlightedMessages`
+- `busiestUser`
+
+#### `UserMessageCount`
+Representa um utilizador e o seu volume de mensagens para o ranking.
+
+### Como o front-end usa concretamente o GraphQL
+- `loadUsers()` chama a query `users`.
+- `signIn()` chama a mutation `signIn`.
+- `createUser()` chama a mutation `createUser`.
+- `loadRooms()` chama a query `rooms`.
+- `loadMessages()` chama a query `messagesByRoom`.
+- `searchMessages()` chama a query `searchMessages`.
+- `loadRoomStats()` chama a query `roomStats`.
+- `loadTopUsers()` chama a query `topUsers`.
+- `focusRoom()` chama a mutation `focusRoom`.
+- `createRoom()` chama a mutation `createRoom`.
+- `addMemberToRoom()` chama a mutation `addMemberToRoom`.
+
+### Exemplo de utilização com Ana
+Depois de autenticar a Ana, o front-end pode chamar a query de salas assim:
+
+```graphql
+query($activeUser: String!) {
+  rooms(activeUser: $activeUser) {
+    id
+    name
+    participants
+    state
+    unreadMessages
+    canManageMembers
+  }
+}
+```
+
+Com as variáveis:
+
+```json
+{
+  "activeUser": "Ana"
+}
+```
+
+Em seguida, quando a Ana seleciona `room-equipa`, a aplicação usa `messagesByRoom` e `roomStats` para preencher a zona central do chat e os indicadores estatísticos.
+
+### Separação de responsabilidades entre GraphQL e WebSocket
+A solução usa as duas tecnologias de forma complementar:
+- **GraphQL**: leitura, autenticação, gestão de salas, pesquisa, estatísticas e ações de administração.
+- **WebSocket**: envio e propagação imediata de mensagens/notificações.
+
+Esta separação melhora a clareza da arquitetura e cumpre o objetivo do projeto de combinar consulta estruturada com comunicação em tempo real.
+
 
 ## 5. Design patterns utilizados
 
