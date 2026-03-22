@@ -63,15 +63,6 @@ import { ChatRoom } from './shared/chat.types';
       </main>
 
       <aside class="channel-column">
-        <app-rooms
-          [rooms]="vm.rooms"
-          [activeRoomId]="vm.activeRoomId"
-          [users]="vm.users"
-          [authenticatedUser]="vm.authenticatedUser"
-          (roomSelected)="store.selectRoom($event)"
-          (roomCreated)="store.createRoom($event.name, $event.participants)"
-        />
-
         @if (vm.authenticatedUser) {
         <app-canal
           [room]="activeRoom(vm.rooms, vm.activeRoomId)"
@@ -83,14 +74,24 @@ import { ChatRoom } from './shared/chat.types';
           (memberAdded)="store.addMemberToActiveRoom($event)"
         />
         } @else {
-        <section class="card section-stack empty-side-panel">
-          <div class="section-title">
-            <h2>Sala</h2>
-            <span class="muted">indisponível</span>
-          </div>
-          <p class="muted">O lado direito só fica disponível depois de autenticar um utilizador.</p>
-        </section>
+          <section class="card section-stack empty-side-panel">
+            <div class="section-title">
+              <h2>Sala</h2>
+              <span class="muted">indisponível</span>
+            </div>
+            <p class="muted">O lado direito só fica disponível depois de autenticar um utilizador.</p>
+          </section>
         }
+
+        <app-rooms
+          [rooms]="vm.rooms"
+          [activeRoomId]="vm.activeRoomId"
+          [users]="vm.users"
+          [authenticatedUser]="vm.authenticatedUser"
+          (roomSelected)="store.selectRoom($event)"
+          (roomCreated)="store.createRoom($event.name, $event.participants)"
+        />
+
       </aside>
     </div>
     }

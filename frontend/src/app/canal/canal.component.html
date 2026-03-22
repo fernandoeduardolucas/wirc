@@ -1,7 +1,10 @@
 @if (room) {
   <aside class="people-panel card nested-panel">
     <div class="section-title compact-title">
-      <h3>Sala</h3>
+      <div>
+        <h3>Sala ativa</h3>
+        <p class="muted room-name">{{ room.name }}</p>
+      </div>
       <span class="muted">{{ room.participants.length }} utilizadores</span>
     </div>
 
