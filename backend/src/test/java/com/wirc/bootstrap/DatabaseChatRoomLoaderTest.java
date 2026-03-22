@@ -1,7 +1,7 @@
 package com.wirc.bootstrap;
 
 import com.wirc.model.RoomSessionSnapshot;
-import com.wirc.persistence.SchemaInspector;
+import com.wirc.common.SchemaInspector;
 import com.wirc.entity.AppUserEntity;
 import com.wirc.entity.ChatRoomEntity;
 import com.wirc.entity.ChatRoomMemberEntity;

@@ -1,4 +1,4 @@
-package com.wirc.service;
+package com.wirc.common;
 
 import com.wirc.model.ChatMessage;
 import com.wirc.model.RoomSessionSnapshot;

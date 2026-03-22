@@ -1,9 +1,7 @@
 package com.wirc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wirc.model.ChatCommand;
-import com.wirc.model.ChatNotification;
-import com.wirc.service.ChatApplicationFacade;
+import com.wirc.service.ChatApplication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +10,6 @@ import org.springframework.test.context.TestPropertySource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 })
 class BackendApplicationTests {
     @Autowired
-    private ChatApplicationFacade chatApplicationFacade;
+    private ChatApplication chatApplicationFacade;
 
 
     @BeforeEach

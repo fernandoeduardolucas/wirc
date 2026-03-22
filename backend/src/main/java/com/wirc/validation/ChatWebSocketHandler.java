@@ -2,10 +2,10 @@ package com.wirc.validation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wirc.gateway.WebSocketNotificationGateway;
 import com.wirc.model.ChatCommand;
-import com.wirc.service.ChatApplicationFacade;
+import com.wirc.service.ChatApplication;
 import com.wirc.model.WebSocketChatCommand;
-import com.wirc.websocket.WebSocketNotificationGateway;
 import com.wirc.model.WebSocketServerMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +22,9 @@ import java.io.IOException;
 @Slf4j
 // Observer pattern support: registers and unregisters websocket clients that receive chat updates.
 public class ChatWebSocketHandler extends TextWebSocketHandler {
+
     private final WebSocketNotificationGateway gateway;
-    private final ChatApplicationFacade chatApplicationFacade;
+    private final ChatApplication chatApplication;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -48,7 +49,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
             log.info("Encaminhando mensagem entre utilizadores: sessionId={}, roomId={}, user={}, focusedRoom={}",
                     session.getId(), command.roomId(), command.user(), command.focusedRoom());
-            chatApplicationFacade.sendMessage(new ChatCommand(
+            chatApplication.sendMessage(new ChatCommand(
                     command.roomId(),
                     command.user(),
                     command.message(),

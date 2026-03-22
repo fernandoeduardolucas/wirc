@@ -25,4 +25,5 @@ public class RoomSessionStateEntity {
 
     @Column(name = "unread_messages", nullable = false)
     private long unreadMessages;
+
 }

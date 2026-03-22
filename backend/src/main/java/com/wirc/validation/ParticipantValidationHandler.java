@@ -2,7 +2,7 @@ package com.wirc.validation;
 
 import com.wirc.exception.ChatValidationException;
 import com.wirc.model.ChatCommand;
-import com.wirc.service.RoomSession;
+import com.wirc.common.RoomSession;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.wirc.persistence;
+package com.wirc.common;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;

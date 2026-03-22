@@ -22,4 +22,5 @@ public class ChatRoomMemberId implements Serializable {
 
     @Column(name = "username", nullable = false, length = 100)
     private String username;
+
 }

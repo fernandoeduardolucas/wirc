@@ -1,40 +1,33 @@
 package com.wirc.service;
 
 import com.wirc.bootstrap.DatabaseChatRoomLoader;
+import com.wirc.common.RoomSession;
 import com.wirc.entity.AppUserEntity;
 import com.wirc.entity.ChatRoomEntity;
+import com.wirc.factory.ChatRoomFactory;
+import com.wirc.gateway.WebSocketNotificationGateway;
 import com.wirc.model.*;
-import com.wirc.persistence.DatabaseChatStateStore;
+import com.wirc.common.DatabaseChatStateStore;
 import com.wirc.repository.AppUserRepository;
 import com.wirc.repository.ChatRoomRepository;
 import com.wirc.validation.MessageLengthValidationHandler;
 import com.wirc.validation.MessageValidationHandler;
 import com.wirc.validation.ParticipantValidationHandler;
 import com.wirc.validation.RequiredFieldValidationHandler;
-import com.wirc.websocket.WebSocketNotificationGateway;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.Normalizer;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.SequencedMap;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-// Facade pattern: this service exposes a single entry point for the chat application use cases.
-public class ChatApplicationFacade {
+public class ChatApplicationImpl implements ChatApplication{
 
 
     private static final List<String> HIGHLIGHT_KEYWORDS = List.of("graphql", "websocket");
@@ -46,7 +39,7 @@ public class ChatApplicationFacade {
     private final AppUserRepository appUserRepository;
     private final ChatRoomRepository chatRoomRepository;
 
-    public ChatApplicationFacade(
+    public ChatApplicationImpl(
             ChatRoomFactory roomFactory,
             DatabaseChatRoomLoader databaseChatRoomLoader,
             WebSocketNotificationGateway notificationGateway,
@@ -61,17 +54,20 @@ public class ChatApplicationFacade {
         this.validationChain = buildValidationChain();
     }
 
+    @Override
     public List<AppUser> users() {
         return loadUsersByUsername().values().stream()
                 .map(user -> new AppUser(user.getUsername(), user.getDisplayName()))
                 .toList();
     }
 
+    @Override
     public AppUser signIn(String user, String password) {
         AppUserEntity authenticatedUser = authenticate(user, password);
         return new AppUser(authenticatedUser.getUsername(), authenticatedUser.getDisplayName());
     }
 
+    @Override
     public List<ChatRoom> rooms(String activeUser) {
         String canonicalUser = resolveCanonicalUsername(activeUser).orElse("");
         return rooms.values().stream()
@@ -80,10 +76,12 @@ public class ChatApplicationFacade {
                 .toList();
     }
 
+    @Override
     public List<ChatMessage> messagesByRoom(String roomId) {
         return new ArrayList<>(requireRoom(roomId).messages());
     }
 
+    @Override
     public List<ChatMessage> searchMessages(String term) {
         String normalized = term.toLowerCase(Locale.ROOT);
         return rooms.values().stream()
@@ -92,6 +90,7 @@ public class ChatApplicationFacade {
                 .toList();
     }
 
+    @Override
     public ChatMessage sendMessage(ChatCommand command) {
         ChatCommand validatedCommand = validateCommand(command);
         RoomSession room = requireRoom(validatedCommand.roomId());
@@ -110,6 +109,7 @@ public class ChatApplicationFacade {
         return chatMessage;
     }
 
+    @Override
     public ChatRoom focusRoom(String roomId, String activeUser) {
         RoomSession room = requireRoom(roomId);
         // State pattern: focusing a room delegates the transition logic to the current state object.
@@ -118,6 +118,7 @@ public class ChatApplicationFacade {
         return toChatRoom(room, resolveCanonicalUsername(activeUser).orElse(""));
     }
 
+    @Override
     public RoomStats roomStats(String roomId) {
         RoomSession room = requireRoom(roomId);
         SequencedMap<String, Long> perUser = room.messages().stream()
@@ -132,6 +133,7 @@ public class ChatApplicationFacade {
         return new RoomStats(room.id(), room.name(), room.messages().size(), Math.toIntExact(highlighted), busiestUser);
     }
 
+    @Override
     public List<UserMessageCount> topUsers() {
         return rooms.values().stream()
                 .flatMap(room -> room.messages().stream())
@@ -143,6 +145,7 @@ public class ChatApplicationFacade {
                 .toList();
     }
 
+    @Override
     @Transactional
     public ChatRoom createRoom(String name, String activeUser, List<String> participants) {
         AppUserEntity actor = resolveExistingUser(activeUser);
@@ -160,6 +163,7 @@ public class ChatApplicationFacade {
         return toChatRoom(roomSession, actor.getUsername());
     }
 
+    @Override
     @Transactional
     public ChatRoom addMemberToRoom(String roomId, String member, String activeUser) {
         RoomSession room = requireRoom(roomId);

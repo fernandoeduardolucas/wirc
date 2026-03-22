@@ -1,5 +1,7 @@
 package com.wirc.persistence;
 
+import com.wirc.common.DatabaseChatStateStore;
+import com.wirc.common.SchemaInspector;
 import com.wirc.repository.ChatMessageRepository;
 import com.wirc.repository.ChatRoomRepository;
 import com.wirc.repository.RoomSessionStateRepository;

@@ -6,7 +6,7 @@ import com.wirc.model.ChatMessage;
 import com.wirc.model.ChatRoom;
 import com.wirc.model.RoomStats;
 import com.wirc.model.UserMessageCount;
-import com.wirc.service.ChatApplicationFacade;
+import com.wirc.service.ChatApplication;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
@@ -19,41 +19,41 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WircController {
 
-    private final ChatApplicationFacade chatFacade;
+    private final ChatApplication chatApplication;
 
     @QueryMapping
     public List<AppUser> users() {
-        return chatFacade.users();
+        return chatApplication.users();
     }
 
     @QueryMapping
     public List<ChatRoom> rooms(@Argument String activeUser) {
-        return chatFacade.rooms(activeUser);
+        return chatApplication.rooms(activeUser);
     }
 
     @QueryMapping
     public List<ChatMessage> messagesByRoom(@Argument String roomId) {
-        return chatFacade.messagesByRoom(roomId);
+        return chatApplication.messagesByRoom(roomId);
     }
 
     @QueryMapping
     public List<ChatMessage> searchMessages(@Argument String term) {
-        return chatFacade.searchMessages(term);
+        return chatApplication.searchMessages(term);
     }
 
     @QueryMapping
     public RoomStats roomStats(@Argument String roomId) {
-        return chatFacade.roomStats(roomId);
+        return chatApplication.roomStats(roomId);
     }
 
     @QueryMapping
     public List<UserMessageCount> topUsers() {
-        return chatFacade.topUsers();
+        return chatApplication.topUsers();
     }
 
     @MutationMapping
     public AppUser signIn(@Argument String user, @Argument String password) {
-        return chatFacade.signIn(user, password);
+        return chatApplication.signIn(user, password);
     }
 
     @MutationMapping
@@ -63,21 +63,21 @@ public class WircController {
             @Argument String message,
             @Argument boolean focusedRoom
     ) {
-        return chatFacade.sendMessage(new ChatCommand(roomId, user, message, focusedRoom));
+        return chatApplication.sendMessage(new ChatCommand(roomId, user, message, focusedRoom));
     }
 
     @MutationMapping
     public ChatRoom focusRoom(@Argument String roomId, @Argument String activeUser) {
-        return chatFacade.focusRoom(roomId, activeUser);
+        return chatApplication.focusRoom(roomId, activeUser);
     }
 
     @MutationMapping
     public ChatRoom createRoom(@Argument String name, @Argument String activeUser, @Argument List<String> participants) {
-        return chatFacade.createRoom(name, activeUser, participants);
+        return chatApplication.createRoom(name, activeUser, participants);
     }
 
     @MutationMapping
     public ChatRoom addMemberToRoom(@Argument String roomId, @Argument String member, @Argument String activeUser) {
-        return chatFacade.addMemberToRoom(roomId, member, activeUser);
+        return chatApplication.addMemberToRoom(roomId, member, activeUser);
     }
 }

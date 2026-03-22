@@ -1,6 +1,6 @@
 package com.wirc.state;
 
-import com.wirc.service.RoomSession;
+import com.wirc.common.RoomSession;
 
 // State pattern: behavior for rooms with unread activity waiting for user attention.
 public class NotifiedRoomState implements RoomState {

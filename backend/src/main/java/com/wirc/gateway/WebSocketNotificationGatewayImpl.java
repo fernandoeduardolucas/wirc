@@ -1,4 +1,4 @@
-package com.wirc.websocket;
+package com.wirc.gateway;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -7,6 +7,7 @@ import com.wirc.model.ChatNotification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -15,11 +16,14 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
+
+
+@Service
 @RequiredArgsConstructor
 @Slf4j
 // Gateway pattern: isolates websocket session management and outbound notification delivery.
-public class WebSocketNotificationGateway {
+public class WebSocketNotificationGatewayImpl implements WebSocketNotificationGateway {
+
     private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
     private final ObjectMapper objectMapper;
 

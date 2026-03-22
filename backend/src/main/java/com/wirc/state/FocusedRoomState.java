@@ -1,6 +1,6 @@
 package com.wirc.state;
 
-import com.wirc.service.RoomSession;
+import com.wirc.common.RoomSession;
 
 // State pattern: behavior for rooms currently being viewed by the user.
 public class FocusedRoomState implements RoomState {
