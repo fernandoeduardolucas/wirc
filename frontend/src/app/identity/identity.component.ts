@@ -1,16 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AppUser } from '../shared/chat.types';
 
 @Component({
   selector: 'app-identity',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './identity.component.html',
   styleUrl: './identity.component.css'
 })
-export class IdentityComponent {
+export class IdentityComponent implements OnChanges {
   @Input({ required: true }) users: AppUser[] = [];
   @Input({ required: true }) currentUser = '';
   @Input({ required: true }) authenticatedUser = '';
@@ -19,18 +19,33 @@ export class IdentityComponent {
   @Output() userCreated = new EventEmitter<{ displayName: string; password: string }>();
   @Output() signOutRequested = new EventEmitter<void>();
 
-  password = '';
-  newDisplayName = '';
-  newPassword = '';
+  readonly loginForm = new FormGroup({
+    user: new FormControl('', { nonNullable: true }),
+    password: new FormControl('', { nonNullable: true })
+  });
+
+  readonly createUserForm = new FormGroup({
+    displayName: new FormControl('', { nonNullable: true }),
+    password: new FormControl('', { nonNullable: true })
+  });
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['currentUser']) {
+      this.loginForm.controls.user.setValue(this.currentUser, { emitEvent: false });
+    }
+  }
+
+  onUserChanged(user: string): void {
+    this.userSelected.emit(user);
+  }
 
   submitCredentials(): void {
-    this.credentialsSubmitted.emit({ user: this.currentUser, password: this.password });
-    this.password = '';
+    this.credentialsSubmitted.emit(this.loginForm.getRawValue());
+    this.loginForm.controls.password.reset('');
   }
 
   submitUserCreation(): void {
-    this.userCreated.emit({ displayName: this.newDisplayName, password: this.newPassword });
-    this.newDisplayName = '';
-    this.newPassword = '';
+    this.userCreated.emit(this.createUserForm.getRawValue());
+    this.createUserForm.reset({ displayName: '', password: '' });
   }
 }

@@ -22,10 +22,10 @@
     <div class="toolbar card nested-toolbar">
       <div>
         <label class="label">Pesquisar no histórico visível</label>
-        <div class="inline-form">
-          <input [(ngModel)]="searchTerm" placeholder="texto a procurar..." (keydown.enter)="submitSearch()" />
-          <button (click)="submitSearch()">Pesquisar</button>
-        </div>
+        <form class="inline-form" [formGroup]="searchForm" (ngSubmit)="submitSearch()">
+          <input formControlName="searchTerm" placeholder="texto a procurar..." />
+          <button type="submit">Pesquisar</button>
+        </form>
       </div>
       @if (stats) {
         <div class="toolbar-stats">
@@ -74,10 +74,10 @@
       </section>
     </div>
 
-    <footer class="composer-box">
-      <input [(ngModel)]="message" [placeholder]="'Escreva uma mensagem para ' + currentRoom.name" (keydown.enter)="submitMessage()" />
-      <button (click)="submitMessage()">Enviar</button>
-    </footer>
+    <form class="composer-box" [formGroup]="messageForm" (ngSubmit)="submitMessage()">
+      <input formControlName="message" [placeholder]="'Escreva uma mensagem para ' + currentRoom.name" />
+      <button type="submit">Enviar</button>
+    </form>
   </section>
 } @else {
   <section class="chat-window card empty-state-panel">

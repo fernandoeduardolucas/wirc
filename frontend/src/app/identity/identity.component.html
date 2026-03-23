@@ -7,23 +7,23 @@
   <p class="label">Utilizador autenticado</p>
   <div class="identity-current">{{ authenticatedUser || 'Sem sessão ativa' }}</div>
 
-  <div class="card nested-panel section-stack compact-stack">
+  <form class="card nested-panel section-stack compact-stack" [formGroup]="loginForm" (ngSubmit)="submitCredentials()">
     <p class="label">Entrar</p>
-    <input [ngModel]="currentUser" (ngModelChange)="userSelected.emit($event)" placeholder="utilizador ou nome" [disabled]="!!authenticatedUser" />
-    <input [(ngModel)]="password" type="password" placeholder="password" (keydown.enter)="submitCredentials()" />
+    <input formControlName="user" (input)="onUserChanged(loginForm.controls.user.value)" placeholder="utilizador ou nome" [disabled]="!!authenticatedUser" />
+    <input formControlName="password" type="password" placeholder="password" />
     <div class="inline-form split-actions">
-      <button (click)="submitCredentials()">{{ authenticatedUser ? 'Reautenticar' : 'Autenticar-se' }}</button>
+      <button type="submit">{{ authenticatedUser ? 'Reautenticar' : 'Autenticar-se' }}</button>
       <button type="button" class="secondary-button" [disabled]="!authenticatedUser" (click)="signOutRequested.emit()">Sair</button>
     </div>
-  </div>
+  </form>
 
-  <div class="card nested-panel section-stack compact-stack">
+  <form class="card nested-panel section-stack compact-stack" [formGroup]="createUserForm" (ngSubmit)="submitUserCreation()">
     <p class="label">Criar utilizador</p>
-    <input [(ngModel)]="newDisplayName" placeholder="Nome visível" />
-    <input [(ngModel)]="newPassword" type="password" placeholder="Password inicial" (keydown.enter)="submitUserCreation()" />
+    <input formControlName="displayName" placeholder="Nome visível" />
+    <input formControlName="password" type="password" placeholder="Password inicial" />
     <small class="muted">O nome criado passa a poder autenticar-se e ser adicionado a canais.</small>
-    <button (click)="submitUserCreation()">Criar utilizador</button>
-  </div>
+    <button type="submit">Criar utilizador</button>
+  </form>
 
   @if (authenticatedUser) {
   <div class="card nested-panel section-stack compact-stack">
