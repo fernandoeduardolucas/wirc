@@ -2,16 +2,15 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { map } from 'rxjs/operators';
 import { ChatComponent } from './chat/chat.component';
-import { IdentityComponent } from './identity/identity.component';
-import { RoomsComponent } from './rooms/rooms.component';
-import { CanalComponent } from './canal/canal.component';
+import { UserComponent } from './user/user.component';
+import { RoomComponent } from './room/room.component';
 import { ChatStore } from './shared/chat.store';
 import { ChatRoom } from './shared/chat.types';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, ChatComponent, IdentityComponent, RoomsComponent, CanalComponent],
+  imports: [CommonModule, ChatComponent, UserComponent, RoomComponent],
   template: `
     @if (vm$ | async; as vm) {
     <div class="shell three-column-shell">
@@ -25,7 +24,7 @@ import { ChatRoom } from './shared/chat.types';
           </div>
         </div>
 
-        <app-identity
+        <app-user
           [users]="vm.users"
           [currentUser]="vm.currentUser"
           [authenticatedUser]="vm.authenticatedUser"
@@ -64,24 +63,20 @@ import { ChatRoom } from './shared/chat.types';
 
       @if (vm.authenticatedUser) {
       <aside class="channel-column">
-        <app-canal
+        <app-room
+          [rooms]="vm.rooms"
           [room]="activeRoom(vm.rooms, vm.activeRoomId)"
-          [currentUser]="vm.currentUser"
-          [authenticatedUser]="vm.authenticatedUser"
+          [activeRoomId]="vm.activeRoomId"
           [users]="vm.users"
+          [authenticatedUser]="vm.authenticatedUser"
+          [currentUser]="vm.currentUser"
           [topUsers]="vm.topUsers"
+          (roomSelected)="store.selectRoom($event)"
+          (roomCreated)="store.createRoom($event.name, $event.participants)"
           (userSelected)="store.selectUser($event)"
           (memberAdded)="store.addMemberToActiveRoom($event)"
         />
 
-        <app-rooms
-          [rooms]="vm.rooms"
-          [activeRoomId]="vm.activeRoomId"
-          [users]="vm.users"
-          [authenticatedUser]="vm.authenticatedUser"
-          (roomSelected)="store.selectRoom($event)"
-          (roomCreated)="store.createRoom($event.name, $event.participants)"
-        />
       </aside>
       }
     </div>
