@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AppError, ChatNotification, OutboundChatMessage } from '../../shared/chat.types';
+import { AppError, ChatNotification, OutboundChatMessage } from '../../models/chat.models';
 
 @Injectable({ providedIn: 'root' })
 export class ChatSocketService {
