@@ -1,0 +1,68 @@
+@if (vm$ | async; as vm) {
+<div class="shell three-column-shell">
+  <aside class="user-column">
+    <div class="brand card">
+      <img class="brand-logo" [src]="wircLogo" alt="WIRC logo" />
+
+      <div>
+        <p class="eyebrow">WIRC</p>
+        <h1>Messenger Relay Chat</h1>
+      </div>
+    </div>
+
+    <app-user
+      [users]="vm.users"
+      [currentUser]="vm.currentUser"
+      [authenticatedUser]="vm.authenticatedUser"
+      (userSelected)="store.selectUser($event)"
+      (credentialsSubmitted)="store.authenticate($event.user, $event.password)"
+      (userCreated)="store.createUser($event.displayName, $event.password)"
+      (signOutRequested)="store.signOut()"
+    />
+  </aside>
+
+  <main class="chat-column">
+    @if (vm.authenticatedUser) {
+    <app-chat
+      [room]="activeRoom(vm.rooms, vm.activeRoomId)"
+      [messages]="vm.messages"
+      [searchResults]="vm.searchResults"
+      [stats]="vm.stats"
+      [currentUser]="vm.currentUser"
+      [authenticatedUser]="vm.authenticatedUser"
+      [notification]="vm.notification"
+      [error]="vm.error"
+      [roomNameResolver]="roomNameResolver(vm.rooms)"
+      (searchSubmitted)="store.runSearch($event)"
+      (messageSent)="store.sendMessage($event)"
+    />
+    } @else {
+    <section class="hero card empty-state-panel">
+      <img class="hero-logo" [src]="wircLogo" alt="WIRC mascot" />
+      <div>
+        <p class="eyebrow">Autenticação obrigatória</p>
+        <h2>Autentique-se ou crie um utilizador para abrir o chat.</h2>
+      </div>
+    </section>
+    }
+  </main>
+
+  @if (vm.authenticatedUser) {
+  <aside class="channel-column">
+    <app-room
+      [rooms]="vm.rooms"
+      [room]="activeRoom(vm.rooms, vm.activeRoomId)"
+      [activeRoomId]="vm.activeRoomId"
+      [users]="vm.users"
+      [authenticatedUser]="vm.authenticatedUser"
+      [currentUser]="vm.currentUser"
+      [topUsers]="vm.topUsers"
+      (roomSelected)="store.selectRoom($event)"
+      (roomCreated)="store.createRoom($event.name, $event.participants)"
+      (userSelected)="store.selectUser($event)"
+      (memberAdded)="store.addMemberToActiveRoom($event)"
+    />
+  </aside>
+  }
+</div>
+}
