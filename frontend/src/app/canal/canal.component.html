@@ -24,7 +24,7 @@
     @if (room.canManageMembers) {
       <div class="card mini-stats section-stack compact-stack">
         <h3>Adicionar utilizador</h3>
-        <select [(ngModel)]="selectedMember">
+        <select [formControl]="selectedMemberControl">
           <option value="">Escolha um utilizador</option>
           @for (user of users; track user.username) {
             @if (!room.participants.includes(user.displayName)) {
@@ -32,7 +32,7 @@
             }
           }
         </select>
-        <button [disabled]="!authenticatedUser || !selectedMember" (click)="addMember()">Adicionar à sala</button>
+        <button [disabled]="!authenticatedUser || !selectedMemberControl.value" (click)="addMember()">Adicionar à sala</button>
       </div>
     }
 

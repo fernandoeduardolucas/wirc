@@ -1,12 +1,12 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AppError, ChatMessage, ChatRoom, RoomStats } from '../shared/chat.types';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [CommonModule, ReactiveFormsModule, DatePipe],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.css'
 })
@@ -23,15 +23,21 @@ export class ChatComponent {
   @Output() searchSubmitted = new EventEmitter<string>();
   @Output() messageSent = new EventEmitter<string>();
 
-  searchTerm = '';
-  message = '';
+  readonly searchForm = new FormGroup({
+    searchTerm: new FormControl('', { nonNullable: true })
+  });
+
+  readonly messageForm = new FormGroup({
+    message: new FormControl('', { nonNullable: true })
+  });
 
   submitSearch(): void {
-    this.searchSubmitted.emit(this.searchTerm);
+    this.searchSubmitted.emit(this.searchForm.controls.searchTerm.value);
   }
 
   submitMessage(): void {
-    this.messageSent.emit(this.message);
-    this.message = '';
+    const message = this.messageForm.controls.message.value;
+    this.messageSent.emit(message);
+    this.messageForm.reset({ message: '' });
   }
 }

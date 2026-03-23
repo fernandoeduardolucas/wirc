@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AppUser, ChatRoom } from '../shared/chat.types';
 
 @Component({
   selector: 'app-rooms',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './rooms.component.html',
   styleUrl: './rooms.component.css'
 })
@@ -18,18 +18,39 @@ export class RoomsComponent {
   @Output() roomSelected = new EventEmitter<string>();
   @Output() roomCreated = new EventEmitter<{ name: string; participants: string[] }>();
 
-  newRoomName = '';
-  selectedParticipants: string[] = [];
+  readonly roomForm = new FormGroup({
+    newRoomName: new FormControl('', { nonNullable: true }),
+    selectedParticipants: new FormArray<FormControl<string>>([])
+  });
+
+  get selectedParticipants(): FormArray<FormControl<string>> {
+    return this.roomForm.controls.selectedParticipants;
+  }
+
+  isParticipantSelected(displayName: string): boolean {
+    return this.selectedParticipants.controls.some((control) => control.value === displayName);
+  }
 
   toggleParticipant(displayName: string, enabled: boolean): void {
-    this.selectedParticipants = enabled
-      ? [...new Set([...this.selectedParticipants, displayName])]
-      : this.selectedParticipants.filter((participant) => participant !== displayName);
+    if (enabled && !this.isParticipantSelected(displayName)) {
+      this.selectedParticipants.push(new FormControl(displayName, { nonNullable: true }));
+      return;
+    }
+
+    if (!enabled) {
+      const index = this.selectedParticipants.controls.findIndex((control) => control.value === displayName);
+      if (index >= 0) {
+        this.selectedParticipants.removeAt(index);
+      }
+    }
   }
 
   submitRoom(): void {
-    this.roomCreated.emit({ name: this.newRoomName, participants: this.selectedParticipants });
-    this.newRoomName = '';
-    this.selectedParticipants = [];
+    this.roomCreated.emit({
+      name: this.roomForm.controls.newRoomName.value,
+      participants: this.selectedParticipants.getRawValue()
+    });
+    this.roomForm.reset({ newRoomName: '' });
+    this.selectedParticipants.clear();
   }
 }

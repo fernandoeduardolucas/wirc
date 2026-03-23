@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { AppUser, ChatRoom, UserMessageCount } from '../shared/chat.types';
 
 @Component({
   selector: 'app-canal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './canal.component.html',
   styleUrl: './canal.component.css'
 })
@@ -19,10 +19,10 @@ export class CanalComponent {
   @Output() userSelected = new EventEmitter<string>();
   @Output() memberAdded = new EventEmitter<string>();
 
-  selectedMember = '';
+  readonly selectedMemberControl = new FormControl('', { nonNullable: true });
 
   addMember(): void {
-    this.memberAdded.emit(this.selectedMember);
-    this.selectedMember = '';
+    this.memberAdded.emit(this.selectedMemberControl.value);
+    this.selectedMemberControl.reset('');
   }
 }
