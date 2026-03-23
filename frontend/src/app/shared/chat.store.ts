@@ -1,10 +1,10 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, EMPTY, Subject, combineLatest, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
-import { ChatService } from '../chat/chat.service';
-import { ChatSocketService } from '../chat/chat-socket.service';
-import { UserService } from '../user/user.service';
-import { RoomService } from '../room/room.service';
+import { ChatService } from '../features/chat/chat.service';
+import { ChatSocketService } from '../features/chat/chat-socket.service';
+import { UserService } from '../features/user/user.service';
+import { RoomService } from '../features/room/room.service';
 import { AppError, AppUser, ChatMessage, ChatNotification, ChatRoom, RoomStats, UserMessageCount } from './chat.types';
 
 @Injectable({ providedIn: 'root' })

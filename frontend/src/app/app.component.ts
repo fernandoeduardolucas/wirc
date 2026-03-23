@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { map } from 'rxjs/operators';
-import { ChatComponent } from './chat/chat.component';
-import { UserComponent } from './user/user.component';
-import { RoomComponent } from './room/room.component';
+import { ChatComponent } from './features/chat/chat.component';
+import { UserComponent } from './features/user/user.component';
+import { RoomComponent } from './features/room/room.component';
 import { ChatStore } from './shared/chat.store';
 import { ChatRoom } from './shared/chat.types';
 

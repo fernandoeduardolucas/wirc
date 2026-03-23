@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { AppUser } from '../shared/chat.types';
+import { AppUser } from '../../shared/chat.types';
 
 @Component({
   selector: 'app-user',

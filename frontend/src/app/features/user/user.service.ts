@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, defer, from, of } from 'rxjs';
-import { AppUser } from '../shared/chat.types';
-import { GraphqlApiService } from '../shared/graphql-api.service';
+import { AppUser } from '../../shared/chat.types';
+import { GraphqlApiService } from '../../shared/graphql-api.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
