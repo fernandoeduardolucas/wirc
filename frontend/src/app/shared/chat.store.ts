@@ -1,13 +1,19 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, EMPTY, Subject, combineLatest, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
-import { ChatService } from './chat.service';
+import { ChatService } from '../chat/chat.service';
+import { ChatSocketService } from '../chat/chat-socket.service';
+import { UserService } from '../user/user.service';
+import { RoomService } from '../room/room.service';
 import { AppError, AppUser, ChatMessage, ChatNotification, ChatRoom, RoomStats, UserMessageCount } from './chat.types';
 
 @Injectable({ providedIn: 'root' })
 // Observer pattern: coordinates reactive application state through RxJS subjects and subscriptions.
 export class ChatStore implements OnDestroy {
   private readonly chatService = inject(ChatService);
+  private readonly chatSocketService = inject(ChatSocketService);
+  private readonly userService = inject(UserService);
+  private readonly roomService = inject(RoomService);
   private readonly refreshRooms$ = new BehaviorSubject<void>(undefined);
   private readonly activeRoomIdSubject = new BehaviorSubject<string>('');
   private readonly currentUserSubject = new BehaviorSubject<string>('');
@@ -23,12 +29,12 @@ export class ChatStore implements OnDestroy {
 
 
   readonly users$ = this.refreshRooms$.pipe(
-    switchMap(() => this.chatService.loadUsers(this.authenticatedUserSubject.value)),
+    switchMap(() => this.userService.loadUsers(this.authenticatedUserSubject.value)),
     catchError((error: Error) => this.handleError(error, [] as AppUser[]))
   );
 
   readonly rooms$ = this.refreshRooms$.pipe(
-    switchMap(() => this.chatService.loadRooms(this.authenticatedUserSubject.value)),
+    switchMap(() => this.roomService.loadRooms(this.authenticatedUserSubject.value)),
     tap((rooms) => {
       if (!this.authenticatedUserSubject.value) {
         this.activeRoomIdSubject.next('');
@@ -86,12 +92,12 @@ export class ChatStore implements OnDestroy {
     ).subscribe((stats) => this.roomStatsSubject.next(stats));
 
     this.refreshRooms$.pipe(
-      switchMap(() => this.chatService.loadTopUsers(this.authenticatedUserSubject.value)),
+      switchMap(() => this.roomService.loadTopUsers(this.authenticatedUserSubject.value)),
       catchError((error: Error) => this.handleError(error, [] as UserMessageCount[]))
     ).subscribe((users) => this.topUsersSubject.next(users));
 
     try {
-      this.socket = this.chatService.connectNotifications((notification) => this.handleNotification(notification));
+      this.socket = this.chatSocketService.connectNotifications((notification) => this.handleNotification(notification));
     } catch {
       this.notificationSubject.next('Modo local ativo: notificações WebSocket indisponíveis.');
     }
@@ -120,7 +126,7 @@ export class ChatStore implements OnDestroy {
       return;
     }
 
-    this.chatService.signIn(normalizedUser, normalizedPassword).pipe(
+    this.userService.signIn(normalizedUser, normalizedPassword).pipe(
       catchError((error: Error) => this.handleError(error, null))
     ).subscribe((user) => {
       if (!user) {
@@ -143,7 +149,7 @@ export class ChatStore implements OnDestroy {
       return;
     }
 
-    this.chatService.createUser(normalizedName, normalizedPassword).pipe(
+    this.userService.createUser(normalizedName, normalizedPassword).pipe(
       catchError((error: Error) => this.handleError(error, null))
     ).subscribe((user) => {
       if (!user) {
@@ -199,7 +205,7 @@ export class ChatStore implements OnDestroy {
     }
 
     try {
-      this.chatService.sendMessage(this.socket, roomId, activeUser, user, normalized, true);
+      this.chatSocketService.sendMessage(this.socket, roomId, activeUser, user, normalized, true);
       this.errorSubject.next(null);
     } catch (error) {
       this.handleError(error as Error, null).subscribe();
@@ -209,11 +215,11 @@ export class ChatStore implements OnDestroy {
   createRoom(name: string, participants: string[]): void {
     const activeUser = this.authenticatedUserSubject.value;
     if (!activeUser) {
-      this.errorSubject.next({ message: 'Assuma primeiro uma identidade válida para criar canais.' });
+      this.errorSubject.next({ message: 'Assuma primeiro uma identidade válida para criar salas.' });
       return;
     }
 
-    this.chatService.createRoom(name.trim(), activeUser, participants).pipe(
+    this.roomService.createRoom(name.trim(), activeUser, participants).pipe(
       catchError((error: Error) => this.handleError(error, null))
     ).subscribe((room) => {
       if (!room) {
@@ -233,7 +239,7 @@ export class ChatStore implements OnDestroy {
       return;
     }
 
-    this.chatService.addMemberToRoom(roomId, member.trim(), activeUser).pipe(
+    this.roomService.addMemberToRoom(roomId, member.trim(), activeUser).pipe(
       catchError((error: Error) => this.handleError(error, null))
     ).subscribe((room) => {
       if (!room) {
@@ -255,7 +261,7 @@ export class ChatStore implements OnDestroy {
   }
 
   private focusRoom(roomId: string): void {
-    this.chatService.focusRoom(roomId, this.authenticatedUserSubject.value).pipe(catchError(() => EMPTY)).subscribe(() => this.refreshRooms$.next());
+    this.roomService.focusRoom(roomId, this.authenticatedUserSubject.value).pipe(catchError(() => EMPTY)).subscribe(() => this.refreshRooms$.next());
   }
 
   private handleNotification(notification: ChatNotification): void {

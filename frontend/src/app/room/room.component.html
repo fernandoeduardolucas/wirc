@@ -1,4 +1,26 @@
-@if (room) {
+<section class="card section-stack">
+  <div class="section-title">
+    <h2>Salas</h2>
+    <span class="muted">{{ rooms.length }} abertas</span>
+  </div>
+
+  @for (roomEntry of rooms; track roomEntry.id) {
+    <button
+      class="room-entry"
+      [class.active]="roomEntry.id === activeRoomId"
+      (click)="roomSelected.emit(roomEntry.id)"
+    >
+      <div>
+        <strong>{{ roomEntry.name }}</strong>
+        <small>{{ roomEntry.participants.join(', ') || 'Sem participantes' }}</small>
+      </div>
+      @if (roomEntry.unreadMessages > 0) {
+        <span class="badge">{{ roomEntry.unreadMessages }}</span>
+      }
+    </button>
+  }
+
+  @if (room) {
   <aside class="people-panel card nested-panel">
     <div class="section-title compact-title">
       <div>
@@ -47,4 +69,26 @@
       </ol>
     </div>
   </aside>
-}
+  }
+
+  <form class="card nested-panel section-stack compact-stack" [formGroup]="roomForm" (ngSubmit)="submitRoom()">
+    <div class="section-title compact-title">
+      <h3>Nova sala</h3>
+      <span class="muted">{{ authenticatedUser || 'autenticação necessária' }}</span>
+    </div>
+    <input formControlName="newRoomName" placeholder="Nome da sala" />
+    <div class="checkbox-list">
+      @for (user of users; track user.username) {
+        <label class="checkbox-item">
+          <input
+            type="checkbox"
+            [checked]="isParticipantSelected(user.displayName)"
+            (change)="toggleParticipant(user.displayName, $any($event.target).checked)"
+          />
+          <span>{{ user.displayName }}</span>
+        </label>
+      }
+    </div>
+    <button type="submit" [disabled]="!authenticatedUser">Criar sala</button>
+  </form>
+</section>

@@ -4,13 +4,13 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AppUser } from '../shared/chat.types';
 
 @Component({
-  selector: 'app-identity',
+  selector: 'app-user',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './identity.component.html',
-  styleUrl: './identity.component.css'
+  templateUrl: './user.component.html',
+  styleUrl: './user.component.css'
 })
-export class IdentityComponent implements OnChanges {
+export class UserComponent implements OnChanges {
   @Input({ required: true }) users: AppUser[] = [];
   @Input({ required: true }) currentUser = '';
   @Input({ required: true }) authenticatedUser = '';
