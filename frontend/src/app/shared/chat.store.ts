@@ -5,7 +5,9 @@ import { ChatService } from '../features/chat/chat.service';
 import { ChatSocketService } from '../features/chat/chat-socket.service';
 import { UserService } from '../features/user/user.service';
 import { RoomService } from '../features/room/room.service';
-import { AppError, AppUser, ChatMessage, ChatNotification, ChatRoom, RoomStats, UserMessageCount } from './chat.types';
+import { AppError, ChatMessage, ChatNotification } from '../models/chat.models';
+import { ChatRoom, RoomStats, UserMessageCount } from '../models/room.models';
+import { AppUser } from '../models/user.models';
 
 @Injectable({ providedIn: 'root' })
 // Observer pattern: coordinates reactive application state through RxJS subjects and subscriptions.

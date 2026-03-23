@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, defer, from, of } from 'rxjs';
-import { ChatRoom, UserMessageCount } from '../../shared/chat.types';
+import { ChatRoom, UserMessageCount } from '../../models/room.models';
 import { GraphqlApiService } from '../../shared/graphql-api.service';
 
 @Injectable({ providedIn: 'root' })

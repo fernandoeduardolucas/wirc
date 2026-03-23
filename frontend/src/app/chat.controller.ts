@@ -1,42 +1,6 @@
 import { Injectable } from '@angular/core';
-
-export interface ChatRoom {
-  id: string;
-  name: string;
-  participants: string[];
-  state: string;
-  unreadMessages: number;
-}
-
-export interface ChatMessage {
-  id: string;
-  roomId: string;
-  user: string;
-  message: string;
-  sentAt: string;
-  highlighted: boolean;
-}
-
-export interface RoomStats {
-  roomId: string;
-  roomName: string;
-  totalMessages: number;
-  highlightedMessages: number;
-  busiestUser: string;
-}
-
-export interface UserMessageCount {
-  user: string;
-  totalMessages: number;
-}
-
-export interface ChatNotification {
-  roomId?: string;
-  roomName?: string;
-  preview: string;
-  user?: string;
-  type: string;
-}
+import { ChatMessage, ChatNotification } from './models/chat.models';
+import { ChatRoom, RoomStats, UserMessageCount } from './models/room.models';
 
 interface GraphqlResponse<T> {
   data?: T;
@@ -50,7 +14,7 @@ export class ChatController {
 
   async loadRooms(): Promise<ChatRoom[]> {
     const response = await this.runQuery<{ rooms: ChatRoom[] }>(
-      'query { rooms { id name participants state unreadMessages } }'
+      'query { rooms { id name participants state unreadMessages canManageMembers } }'
     );
     return response.data?.rooms ?? [];
   }
@@ -106,7 +70,7 @@ export class ChatController {
 
   async focusRoom(roomId: string): Promise<ChatRoom> {
     const response = await this.runQuery<{ focusRoom: ChatRoom }>(
-      'mutation($roomId: String!) { focusRoom(roomId: $roomId) { id name participants state unreadMessages } }',
+      'mutation($roomId: String!) { focusRoom(roomId: $roomId) { id name participants state unreadMessages canManageMembers } }',
       { roomId }
     );
 

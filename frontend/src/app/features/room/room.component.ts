@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { AppUser, ChatRoom, UserMessageCount } from '../../shared/chat.types';
+import { ChatRoom, UserMessageCount } from '../../models/room.models';
+import { AppUser } from '../../models/user.models';
 
 @Component({
   selector: 'app-room',

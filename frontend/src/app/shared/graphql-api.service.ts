@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AppError } from './chat.types';
+import { AppError } from '../models/chat.models';
 
 interface GraphqlResponse<T> {
   data?: T;

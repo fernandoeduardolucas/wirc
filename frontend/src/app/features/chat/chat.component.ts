@@ -1,7 +1,8 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { AppError, ChatMessage, ChatRoom, RoomStats } from '../../shared/chat.types';
+import { AppError, ChatMessage } from '../../models/chat.models';
+import { ChatRoom, RoomStats } from '../../models/room.models';
 
 @Component({
   selector: 'app-chat',

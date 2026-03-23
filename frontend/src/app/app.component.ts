@@ -5,7 +5,7 @@ import { ChatComponent } from './features/chat/chat.component';
 import { UserComponent } from './features/user/user.component';
 import { RoomComponent } from './features/room/room.component';
 import { ChatStore } from './shared/chat.store';
-import { ChatRoom } from './shared/chat.types';
+import { ChatRoom } from './models/room.models';
 
 @Component({
   selector: 'app-root',
