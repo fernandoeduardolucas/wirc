@@ -384,7 +384,7 @@ No serviço de aplicação, uma mensagem fica marcada como destacada quando cont
 
 ## 4.10 Endpoint GraphQL, contratos e forma de utilização
 
-A API GraphQL da aplicação está disponível em `http://localhost:8080/graphql`. O front-end usa sempre pedidos `POST` com `Content-Type: application/json`, enviando um corpo com o formato:
+A API GraphQL da aplicação está disponível em `http://localhost:8080/wirc`. O front-end usa sempre pedidos `POST` com `Content-Type: application/json`, enviando um corpo com o formato:
 
 ```json
 {

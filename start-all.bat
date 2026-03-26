@@ -10,5 +10,5 @@ echo Instalando dependencias e iniciando frontend Angular 20 na porta 4200...
 start "wirc-frontend" cmd /k "cd /d %ROOT_DIR%frontend && npm install && npm start"
 
 echo.
-echo Backend:  http://localhost:8080/graphql
+echo Backend:  http://localhost:8080/wirc
 echo Frontend: http://localhost:4200
