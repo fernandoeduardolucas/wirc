@@ -15,8 +15,8 @@ Aplicação de chat com várias salas, notificações em tempo real e estatísti
 - **Backend**: Spring Boot 4, GraphQL e WebSocket.
 - **Frontend**: Angular 20 standalone.
 - **Comunicação**:
-  - GraphQL em `http://localhost:8080/graphql`
-  - WebSocket em `ws://localhost:8080/ws/chat`
+  - GraphQL em `http://localhost:8080/wirc`
+  - WebSocket em `ws://localhost:8080/wirc/chat`
 
 ## Design Patterns usados
 
@@ -73,7 +73,7 @@ query {
 
 ### Enviar mensagem por WebSocket
 
-Envie o seguinte JSON para `ws://localhost:8080/ws/chat`:
+Envie o seguinte JSON para `ws://localhost:8080/wirc/chat`:
 
 ```json
 {

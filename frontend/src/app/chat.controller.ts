@@ -9,8 +9,8 @@ interface GraphqlResponse<T> {
 
 @Injectable({ providedIn: 'root' })
 export class ChatController {
-  private readonly endpoint = 'http://localhost:8080/graphql';
-  private readonly websocketEndpoint = 'ws://localhost:8080/ws/chat';
+  private readonly endpoint = 'http://localhost:8080/wirc';
+  private readonly websocketEndpoint = 'ws://localhost:8080/wirc/chat';
 
   async loadRooms(): Promise<ChatRoom[]> {
     const response = await this.runQuery<{ rooms: ChatRoom[] }>(
