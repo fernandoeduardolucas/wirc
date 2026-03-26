@@ -281,7 +281,7 @@ flowchart TD
 
 ## 4.9 Utilização do WebSocket na aplicação
 
-O WebSocket é usado exclusivamente para a componente **tempo real** da aplicação, isto é, para o envio de mensagens e para a difusão imediata de notificações para todos os clientes ligados. No front-end, a ligação é aberta para `ws://localhost:8080/ws/chat`. No back-end, esse endpoint é registado na configuração WebSocket e tratado por `ChatWebSocketHandler`.
+O WebSocket é usado exclusivamente para a componente **tempo real** da aplicação, isto é, para o envio de mensagens e para a difusão imediata de notificações para todos os clientes ligados. No front-end, a ligação é aberta para `ws://localhost:8080/wirc/chat`. No back-end, esse endpoint é registado na configuração WebSocket e tratado por `ChatWebSocketHandler`.
 
 ### Como o fluxo funciona
 1. O front-end abre a ligação WebSocket quando a `ChatStore` é construída.
@@ -358,11 +358,11 @@ Considere o seguinte cenário:
 Os valores de `sessionId` e `messageId` variam em cada execução, mas o formato observado nos logs será semelhante a este:
 
 ```text
-INFO  WebSocket handshake concluído: sessionId=ana-session, remoteAddress=/127.0.0.1:53001, uri=ws://localhost:8080/ws/chat
+INFO  WebSocket handshake concluído: sessionId=ana-session, remoteAddress=/127.0.0.1:53001, uri=ws://localhost:8080/wirc/chat
 INFO  Sessão WebSocket registada: sessionId=ana-session, totalSessoes=1
 INFO  Mensagem CONNECTED enviada após handshake: sessionId=ana-session
 
-INFO  WebSocket handshake concluído: sessionId=bruno-session, remoteAddress=/127.0.0.1:53002, uri=ws://localhost:8080/ws/chat
+INFO  WebSocket handshake concluído: sessionId=bruno-session, remoteAddress=/127.0.0.1:53002, uri=ws://localhost:8080/wirc/chat
 INFO  Sessão WebSocket registada: sessionId=bruno-session, totalSessoes=2
 INFO  Mensagem CONNECTED enviada após handshake: sessionId=bruno-session
 
@@ -384,7 +384,7 @@ No serviço de aplicação, uma mensagem fica marcada como destacada quando cont
 
 ## 4.10 Endpoint GraphQL, contratos e forma de utilização
 
-A API GraphQL da aplicação está disponível em `http://localhost:8080/graphql`. O front-end usa sempre pedidos `POST` com `Content-Type: application/json`, enviando um corpo com o formato:
+A API GraphQL da aplicação está disponível em `http://localhost:8080/wirc`. O front-end usa sempre pedidos `POST` com `Content-Type: application/json`, enviando um corpo com o formato:
 
 ```json
 {

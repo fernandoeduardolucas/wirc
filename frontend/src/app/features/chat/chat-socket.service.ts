@@ -3,7 +3,7 @@ import { AppError, ChatNotification, OutboundChatMessage } from '../../models/ch
 
 @Injectable({ providedIn: 'root' })
 export class ChatSocketService {
-  private readonly websocketEndpoint = 'ws://localhost:8080/ws/chat';
+  private readonly websocketEndpoint = 'ws://localhost:8080/wirc/chat';
   private readonly pendingSocketMessages: OutboundChatMessage[] = [];
 
   connectNotifications(onNotification: (notification: ChatNotification) => void): WebSocket {

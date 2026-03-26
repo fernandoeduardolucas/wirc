@@ -14,7 +14,7 @@ interface GraphqlResponse<T> {
 
 @Injectable({ providedIn: 'root' })
 export class GraphqlApiService {
-  private readonly endpoint = 'http://localhost:8080/graphql';
+  private readonly endpoint = 'http://localhost:8080/wirc';
 
   async runQuery<T>(query: string, variables: Record<string, string | boolean | string[]> = {}): Promise<GraphqlResponse<T>> {
     const raw = await fetch(this.endpoint, {
