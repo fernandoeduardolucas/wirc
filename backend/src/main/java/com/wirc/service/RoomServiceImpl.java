@@ -120,6 +120,7 @@ public class RoomServiceImpl implements RoomService {
         return toChatRoom(room, actor.getUsername());
     }
 
+    @Override
     public RoomSession requireAccessibleRoom(String roomId, String activeUser) {
         RoomSession room = chatStateRegistry.requireRoom(roomId);
         String canonicalUser = userFacade.requireCanonicalUser(activeUser);

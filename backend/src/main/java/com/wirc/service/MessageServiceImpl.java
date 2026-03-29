@@ -23,31 +23,31 @@ public class MessageServiceImpl implements MessageService {
     private final ChatStateRegistry chatStateRegistry;
     private final WebSocketNotificationGateway notificationGateway;
     private final DatabaseChatStateStore chatStateStore;
-    private final UserServiceImpl userApplication;
-    private final RoomServiceImpl roomApplication;
+    private final UserService userService;
+    private final RoomService roomService;
 
     public MessageServiceImpl(
             ChatStateRegistry chatStateRegistry,
             WebSocketNotificationGateway notificationGateway,
             DatabaseChatStateStore chatStateStore,
-            UserServiceImpl userApplication,
-            RoomServiceImpl roomApplication) {
+            UserServiceImpl userService,
+            RoomServiceImpl roomService) {
         this.chatStateRegistry = chatStateRegistry;
         this.notificationGateway = notificationGateway;
         this.chatStateStore = chatStateStore;
-        this.userApplication = userApplication;
-        this.roomApplication = roomApplication;
+        this.userService = userService;
+        this.roomService = roomService;
     }
 
     @Override
     public List<ChatMessage> messagesByRoom(String roomId, String activeUser) {
-        RoomSession room = roomApplication.requireAccessibleRoom(roomId, activeUser);
+        RoomSession room = roomService.requireAccessibleRoom(roomId, activeUser);
         return new ArrayList<>(room.messages());
     }
 
     @Override
     public List<ChatMessage> searchMessages(String term, String activeUser) {
-        String canonicalUser = userApplication.requireCanonicalUser(activeUser);
+        String canonicalUser = userService.requireCanonicalUser(activeUser);
         String normalized = term.toLowerCase(Locale.ROOT);
         return chatStateRegistry.rooms().values().stream()
                 .filter(room -> room.participants().contains(canonicalUser))
@@ -75,9 +75,9 @@ public class MessageServiceImpl implements MessageService {
     }
 
     private ChatCommand validateCommand(ChatCommand command) {
-        String canonicalUsername = userApplication.resolveCanonicalUsername(command.user())
+        String canonicalUsername = userService.resolveCanonicalUsername(command.user())
                 .orElseThrow(() -> new IllegalArgumentException("Utilizador não encontrado: " + command.user()));
-        String canonicalActiveUser = userApplication.requireCanonicalUser(command.activeUser());
+        String canonicalActiveUser = userService.requireCanonicalUser(command.activeUser());
         if (!canonicalActiveUser.equals(canonicalUsername)) {
             throw new IllegalArgumentException("Só o utilizador autenticado pode enviar mensagens em seu nome.");
         }

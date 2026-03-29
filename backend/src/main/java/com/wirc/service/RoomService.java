@@ -1,5 +1,6 @@
 package com.wirc.service;
 
+import com.wirc.common.RoomSession;
 import com.wirc.model.ChatRoom;
 import com.wirc.model.RoomStats;
 import com.wirc.model.UserMessageCount;
@@ -18,4 +19,6 @@ public interface RoomService {
     ChatRoom createRoom(String name, String activeUser, List<String> participants);
 
     ChatRoom addMemberToRoom(String roomId, String member, String activeUser);
+
+    RoomSession requireAccessibleRoom(String roomId, String activeUser);
 }

@@ -52,6 +52,7 @@ public class ChatStateRegistry {
                 .forEach(snapshot -> rooms.put(snapshot.id(), roomFactory.createFromSnapshot(snapshot)));
     }
 
+    //Chain of responsibility
     private MessageValidationHandler buildValidationChain() {
         MessageValidationHandler required = new RequiredFieldValidationHandler();
         required
