@@ -9,6 +9,7 @@ import com.wirc.model.ChatRoom;
 import com.wirc.model.RoomStats;
 import com.wirc.model.UserMessageCount;
 import com.wirc.repository.ChatRoomRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.util.SequencedMap;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class RoomServiceImpl implements RoomService {
 
     private static final String ROOM_NOT_FOUND = "Sala não encontrada: ";
@@ -32,22 +34,12 @@ public class RoomServiceImpl implements RoomService {
     private final ChatStateRegistry chatStateRegistry;
     private final DatabaseChatStateStore chatStateStore;
     private final ChatRoomRepository chatRoomRepository;
-    private final UserService userFacade;
+    private final UserService userService;
 
-    public RoomServiceImpl(
-            ChatStateRegistry chatStateRegistry,
-            DatabaseChatStateStore chatStateStore,
-            ChatRoomRepository chatRoomRepository,
-            UserService userFacade) {
-        this.chatStateRegistry = chatStateRegistry;
-        this.chatStateStore = chatStateStore;
-        this.chatRoomRepository = chatRoomRepository;
-        this.userFacade = userFacade;
-    }
 
     @Override
     public List<ChatRoom> rooms(String activeUser) {
-        String canonicalUser = userFacade.requireCanonicalUser(activeUser);
+        String canonicalUser = userService.requireCanonicalUser(activeUser);
         return chatStateRegistry.rooms().values().stream()
                 .filter(room -> room.participants().contains(canonicalUser))
                 .sorted(Comparator.comparing(RoomSession::name))
@@ -60,7 +52,7 @@ public class RoomServiceImpl implements RoomService {
         RoomSession room = requireAccessibleRoom(roomId, activeUser);
         room.state().onRoomFocused(room);
         persistState();
-        return toChatRoom(room, userFacade.requireCanonicalUser(activeUser));
+        return toChatRoom(room, userService.requireCanonicalUser(activeUser));
     }
 
     @Override
@@ -80,7 +72,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     public List<UserMessageCount> topUsers(String activeUser) {
-        String canonicalUser = userFacade.requireCanonicalUser(activeUser);
+        String canonicalUser = userService.requireCanonicalUser(activeUser);
         return chatStateRegistry.rooms().values().stream()
                 .filter(room -> room.participants().contains(canonicalUser))
                 .flatMap(room -> room.messages().stream())
@@ -95,7 +87,7 @@ public class RoomServiceImpl implements RoomService {
     @Override
     @Transactional
     public ChatRoom createRoom(String name, String activeUser, List<String> participants) {
-        AppUserEntity actor = userFacade.resolveExistingUser(activeUser);
+        AppUserEntity actor = userService.resolveExistingUser(activeUser);
         String roomName = requireText(name, "Nome da sala obrigatório.");
         LinkedHashMap<String, String> canonicalParticipants = resolveCanonicalParticipants(actor, participants);
 
@@ -108,10 +100,10 @@ public class RoomServiceImpl implements RoomService {
     @Transactional
     public ChatRoom addMemberToRoom(String roomId, String member, String activeUser) {
         RoomSession room = chatStateRegistry.requireRoom(roomId);
-        AppUserEntity actor = userFacade.resolveExistingUser(activeUser);
+        AppUserEntity actor = userService.resolveExistingUser(activeUser);
         ensureUserCanManageRoom(room, actor);
 
-        AppUserEntity memberEntity = userFacade.resolveExistingUser(member);
+        AppUserEntity memberEntity = userService.resolveExistingUser(member);
         addParticipantIfMissing(room, memberEntity.getUsername());
 
         ChatRoomEntity roomEntity = requireRoomEntity(roomId);
@@ -123,7 +115,7 @@ public class RoomServiceImpl implements RoomService {
     @Override
     public RoomSession requireAccessibleRoom(String roomId, String activeUser) {
         RoomSession room = chatStateRegistry.requireRoom(roomId);
-        String canonicalUser = userFacade.requireCanonicalUser(activeUser);
+        String canonicalUser = userService.requireCanonicalUser(activeUser);
         if (!room.participants().contains(canonicalUser)) {
             throw new IllegalArgumentException(USER_NOT_IN_ROOM);
         }
@@ -131,7 +123,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     private ChatRoom toChatRoom(RoomSession room, String activeUser) {
-        Map<String, AppUserEntity> usersByUsername = userFacade.loadUsersByUsername();
+        Map<String, AppUserEntity> usersByUsername = userService.loadUsersByUsername();
         return new ChatRoom(
                 room.id(),
                 room.name(),
@@ -173,7 +165,7 @@ public class RoomServiceImpl implements RoomService {
         LinkedHashMap<String, String> canonicalParticipants = new LinkedHashMap<>();
         canonicalParticipants.put(actor.getUsername(), actor.getUsername());
         normalizeParticipantList(participants).stream()
-                .map(userFacade::resolveExistingUser)
+                .map(userService::resolveExistingUser)
                 .forEach(participant -> canonicalParticipants.put(participant.getUsername(), participant.getUsername()));
         return canonicalParticipants;
     }
@@ -219,7 +211,7 @@ public class RoomServiceImpl implements RoomService {
 
     private void addMembersToEntity(ChatRoomEntity roomEntity, Iterable<String> usernames) {
         for (String username : usernames) {
-            roomEntity.addMember(userFacade.resolveExistingUser(username));
+            roomEntity.addMember(userService.resolveExistingUser(username));
         }
     }
 

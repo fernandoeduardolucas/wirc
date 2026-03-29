@@ -3,6 +3,7 @@ package com.wirc.service;
 import com.wirc.entity.AppUserEntity;
 import com.wirc.model.AppUser;
 import com.wirc.repository.AppUserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,13 +17,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final AppUserRepository appUserRepository;
 
-    public UserServiceImpl(AppUserRepository appUserRepository) {
-        this.appUserRepository = appUserRepository;
-    }
 
     @Override
     public List<AppUser> users() {

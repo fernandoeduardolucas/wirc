@@ -6,6 +6,7 @@ import com.wirc.gateway.WebSocketNotificationGateway;
 import com.wirc.model.ChatCommand;
 import com.wirc.model.ChatMessage;
 import com.wirc.model.ChatNotification;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
     private static final List<String> HIGHLIGHT_KEYWORDS = List.of("graphql", "websocket");
 
@@ -26,18 +28,6 @@ public class MessageServiceImpl implements MessageService {
     private final UserService userService;
     private final RoomService roomService;
 
-    public MessageServiceImpl(
-            ChatStateRegistry chatStateRegistry,
-            WebSocketNotificationGateway notificationGateway,
-            DatabaseChatStateStore chatStateStore,
-            UserServiceImpl userService,
-            RoomServiceImpl roomService) {
-        this.chatStateRegistry = chatStateRegistry;
-        this.notificationGateway = notificationGateway;
-        this.chatStateStore = chatStateStore;
-        this.userService = userService;
-        this.roomService = roomService;
-    }
 
     @Override
     public List<ChatMessage> messagesByRoom(String roomId, String activeUser) {
