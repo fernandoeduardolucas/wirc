@@ -25,13 +25,13 @@ Aplicação de chat com várias salas, notificações em tempo real e estatísti
 - **State**: salas alternam entre `FOCUSED` e `NOTIFIED` consoante foco/notificações.
 - **Factory**: `ChatRoomFactory` cria salas iniciais de forma uniforme.
 
-## Rodar tudo junto (Linux/macOS)
+## Executa tudo junto (Linux/macOS)
 
 ```bash
 ./start-all.sh
 ```
 
-## Rodar tudo junto (Windows)
+## Executa tudo junto (Windows)
 
 ```bat
 start-all.bat
@@ -80,7 +80,7 @@ Envie o seguinte JSON para `ws://localhost:8080/wirc/chat`:
   "type": "SEND_MESSAGE",
   "roomId": "room-equipa",
   "user": "Ana",
-  "message": "Vamos validar GraphQL e WebSocket hoje",
+  "message": "olá ddtc?",
   "focusedRoom": true
 }
 ```
