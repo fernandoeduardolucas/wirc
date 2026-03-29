@@ -1,0 +1,37 @@
+erDiagram
+    APP_USER ||--o{ CHAT_ROOM_MEMBER : participa
+    CHAT_ROOM ||--o{ CHAT_ROOM_MEMBER : contem
+    CHAT_ROOM ||--o{ CHAT_MESSAGE : possui
+    APP_USER ||--o{ CHAT_MESSAGE : envia
+    CHAT_ROOM ||--|| ROOM_SESSION_STATE : estado_atual
+
+    APP_USER {
+        string username PK
+        string display_name
+        string password
+    }
+
+    CHAT_ROOM {
+        string id PK
+        string name
+    }
+
+    CHAT_ROOM_MEMBER {
+        string room_id PK, FK
+        string username PK, FK
+    }
+
+    CHAT_MESSAGE {
+        string id PK
+        string room_id FK
+        string username FK
+        string message
+        datetime sent_at
+        boolean highlighted
+    }
+
+    ROOM_SESSION_STATE {
+        string room_id PK, FK
+        string state
+        long unread_messages
+    }

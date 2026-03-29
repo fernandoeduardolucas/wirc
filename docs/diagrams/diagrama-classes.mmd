@@ -1,0 +1,64 @@
+classDiagram
+    class AppComponent
+    class ChatStore
+    class ChatService
+    class WircController
+    class WircFacade
+    class WircFacadeImpl
+    class ChatWebSocketHandler
+    class UserService
+    class UserServiceImpl
+    class RoomService
+    class RoomServiceImpl
+    class MessageService
+    class MessageServiceImpl
+    class ChatStateRegistry
+    class ChatRoomFactory
+    class DatabaseChatStateStore
+    class MessageValidationHandler
+    class RequiredFieldValidationHandler
+    class ParticipantValidationHandler
+    class MessageLengthValidationHandler
+    class RoomSession
+    class RoomState
+    class FocusedRoomState
+    class NotifiedRoomState
+    class WebSocketNotificationGateway
+    class ChatRoomEntity
+    class AppUserEntity
+    class ChatMessageEntity
+    class ChatRoomMemberEntity
+    class RoomSessionStateEntity
+
+    AppComponent --> ChatStore : consome estado
+    ChatStore --> ChatService : invoca API
+    ChatStore --> ChatService : abre WebSocket
+    WircController --> WircFacade : delega queries/mutations
+    WircFacade <|.. WircFacadeImpl
+    WircFacadeImpl --> UserService : autenticação e utilizadores
+    UserService <|.. UserServiceImpl
+    WircFacadeImpl --> RoomService : salas e estatísticas
+    RoomService <|.. RoomServiceImpl
+    WircFacadeImpl --> MessageService : mensagens e pesquisa
+    MessageService <|.. MessageServiceImpl
+    ChatWebSocketHandler --> MessageService : delega envio
+    ChatWebSocketHandler --> WebSocketNotificationGateway : gere sessoes
+    RoomServiceImpl --> ChatStateRegistry : lê estado das salas
+    MessageServiceImpl --> ChatStateRegistry : valida e atualiza estado
+    ChatStateRegistry --> ChatRoomFactory : carrega snapshots
+    ChatStateRegistry --> MessageValidationHandler : valida comandos
+    MessageValidationHandler <|-- RequiredFieldValidationHandler
+    MessageValidationHandler <|-- ParticipantValidationHandler
+    MessageValidationHandler <|-- MessageLengthValidationHandler
+    RoomServiceImpl --> DatabaseChatStateStore : persiste snapshots
+    MessageServiceImpl --> DatabaseChatStateStore : persiste snapshots
+    ChatStateRegistry --> RoomSession : gere estado em memoria
+    RoomSession --> RoomState : delega comportamento
+    RoomState <|.. FocusedRoomState
+    RoomState <|.. NotifiedRoomState
+    RoomServiceImpl --> ChatRoomEntity : persiste salas
+    UserServiceImpl --> AppUserEntity : persiste utilizadores
+    MessageServiceImpl --> ChatMessageEntity : persiste mensagens
+    ChatRoomEntity --> ChatRoomMemberEntity : membros
+    ChatRoomMemberEntity --> AppUserEntity : utilizador
+    RoomSessionStateEntity --> ChatRoomEntity : estado de leitura

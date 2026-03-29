@@ -1,0 +1,8 @@
+flowchart LR
+    A[Angular Front-end] -->|GraphQL queries/mutations| B[Spring Boot Back-end]
+    A -->|WebSocket SEND_MESSAGE / notificações| B
+    B --> C[Serviço de aplicação / domínio do chat]
+    C --> D[(PostgreSQL)]
+    C --> E[Gateway de notificações WebSocket]
+    D --> C
+    E --> A
