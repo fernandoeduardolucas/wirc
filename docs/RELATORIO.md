@@ -138,10 +138,18 @@ No front-end, os componentes tratam da interação com o utilizador:
 A classe `ChatStore` centraliza o estado reativo da aplicação e funciona como ponto de coordenação entre componentes e o serviço HTTP/WebSocket. Já `ChatService` encapsula os detalhes de comunicação com o servidor.
 
 ### 4.3 Camada de entrada no back-end
-A classe `WircController` expõe as operações GraphQL. O `ChatWebSocketHandler` recebe mensagens via WebSocket, valida o tipo de comando e encaminha o processamento para o serviço de aplicação.
+A classe `WircController` expõe as operações GraphQL e delega as chamadas na fachada `WircFacade`. O `ChatWebSocketHandler` recebe mensagens via WebSocket, valida o tipo de comando e encaminha o processamento para o serviço de aplicação.
 
 ### 4.4 Camada de aplicação e domínio
-A interface `ChatApplication` e a implementação `ChatApplicationImpl` concentram as regras principais:
+As regras principais estão distribuídas por serviços no pacote `com.wirc.service`:
+- `UserService` / `UserServiceImpl` para autenticação e gestão de utilizadores;
+- `RoomService` / `RoomServiceImpl` para gestão de salas e estatísticas;
+- `MessageService` / `MessageServiceImpl` para envio e pesquisa de mensagens;
+- `ChatStateRegistry` para manter salas em memória e construir a cadeia de validação.
+
+Em paralelo, o domínio em memória apoia-se em `RoomSession`, `RoomState`, `FocusedRoomState`, `NotifiedRoomState`, `ChatRoomFactory` e `DatabaseChatStateStore`.
+
+Estas classes concentram as regras principais de:
 - autenticação;
 - criação de utilizadores;
 - gestão de salas;
@@ -205,10 +213,18 @@ classDiagram
     class ChatStore
     class ChatService
     class WircController
+    class WircFacade
+    class WircFacadeImpl
     class ChatWebSocketHandler
-    class ChatApplication
-    class ChatApplicationImpl
+    class UserService
+    class UserServiceImpl
+    class RoomService
+    class RoomServiceImpl
+    class MessageService
+    class MessageServiceImpl
+    class ChatStateRegistry
     class ChatRoomFactory
+    class DatabaseChatStateStore
     class MessageValidationHandler
     class RequiredFieldValidationHandler
     class ParticipantValidationHandler
@@ -227,22 +243,32 @@ classDiagram
     AppComponent --> ChatStore : consome estado
     ChatStore --> ChatService : invoca API
     ChatStore --> ChatService : abre WebSocket
-    WircController --> ChatApplication : delega queries/mutations
-    ChatWebSocketHandler --> ChatApplication : delega envio
+    WircController --> WircFacade : delega queries/mutations
+    WircFacade <|.. WircFacadeImpl
+    WircFacadeImpl --> UserService : autenticação e utilizadores
+    UserService <|.. UserServiceImpl
+    WircFacadeImpl --> RoomService : salas e estatísticas
+    RoomService <|.. RoomServiceImpl
+    WircFacadeImpl --> MessageService : mensagens e pesquisa
+    MessageService <|.. MessageServiceImpl
+    ChatWebSocketHandler --> MessageService : delega envio
     ChatWebSocketHandler --> WebSocketNotificationGateway : gere sessoes
-    ChatApplication <|.. ChatApplicationImpl
-    ChatApplicationImpl --> ChatRoomFactory : recria salas
-    ChatApplicationImpl --> MessageValidationHandler : valida comandos
+    RoomServiceImpl --> ChatStateRegistry : lê estado das salas
+    MessageServiceImpl --> ChatStateRegistry : valida e atualiza estado
+    ChatStateRegistry --> ChatRoomFactory : carrega snapshots
+    ChatStateRegistry --> MessageValidationHandler : valida comandos
     MessageValidationHandler <|-- RequiredFieldValidationHandler
     MessageValidationHandler <|-- ParticipantValidationHandler
     MessageValidationHandler <|-- MessageLengthValidationHandler
-    ChatApplicationImpl --> RoomSession : gere estado em memoria
+    RoomServiceImpl --> DatabaseChatStateStore : persiste snapshots
+    MessageServiceImpl --> DatabaseChatStateStore : persiste snapshots
+    ChatStateRegistry --> RoomSession : gere estado em memoria
     RoomSession --> RoomState : delega comportamento
     RoomState <|.. FocusedRoomState
     RoomState <|.. NotifiedRoomState
-    ChatApplicationImpl --> ChatRoomEntity : persiste salas
-    ChatApplicationImpl --> AppUserEntity : persiste utilizadores
-    ChatApplicationImpl --> ChatMessageEntity : persiste mensagens
+    RoomServiceImpl --> ChatRoomEntity : persiste salas
+    UserServiceImpl --> AppUserEntity : persiste utilizadores
+    MessageServiceImpl --> ChatMessageEntity : persiste mensagens
     ChatRoomEntity --> ChatRoomMemberEntity : membros
     ChatRoomMemberEntity --> AppUserEntity : utilizador
     RoomSessionStateEntity --> ChatRoomEntity : estado de leitura
@@ -287,8 +313,8 @@ O WebSocket é usado exclusivamente para a componente **tempo real** da aplicaç
 1. O front-end abre a ligação WebSocket quando a `ChatStore` é construída.
 2. O servidor conclui o handshake, regista a sessão no gateway e envia uma mensagem inicial do tipo `CONNECTED`.
 3. Quando o utilizador envia uma mensagem, o Angular envia um payload JSON do tipo `SEND_MESSAGE`.
-4. O `ChatWebSocketHandler` recebe o payload, converte-o para `WebSocketChatCommand` e delega o processamento em `ChatApplication`.
-5. O serviço valida a mensagem, persiste o estado, cria a notificação e pede ao `WebSocketNotificationGateway` para a difundir.
+4. O `ChatWebSocketHandler` recebe o payload, converte-o para `WebSocketChatCommand` e delega o processamento em `MessageService`.
+5. O `MessageService` valida a mensagem via cadeia de validação do `ChatStateRegistry`, persiste o estado e pede ao `WebSocketNotificationGateway` para a difundir.
 6. Todos os clientes com socket aberto recebem a notificação `NEW_MESSAGE`.
 
 ### Contrato de entrada do WebSocket
@@ -525,21 +551,21 @@ Esta separação melhora a clareza da arquitetura e cumpre o objetivo do projeto
 
 ## 5. Design patterns utilizados
 
-## 5.1 Facade
-O projeto apresenta uma **fachada de aplicação** através da interface `ChatApplication`, que fornece um ponto único de entrada para as principais operações do chat.
+### 5.1 Facade
+O projeto apresenta uma **fachada** através da interface `WircFacade` e da implementação `WircFacadeImpl`, criando um ponto único de entrada para as operações GraphQL.
 
 ### Como foi aplicado
-Em vez de espalhar a lógica por múltiplos controladores ou handlers, o sistema concentra as funcionalidades centrais num serviço de aplicação único, consumido tanto pelo controlador GraphQL como pelo handler WebSocket.
+Em vez de expor os serviços de domínio diretamente no controlador, o sistema usa `WircFacade` para concentrar o contrato de entrada da camada GraphQL e delegar para `UserService`, `RoomService` e `MessageService` (pacote `com.wirc.service`).
 
 ### Benefícios
-- Redução do acoplamento entre camadas de entrada e lógica de negócio.
-- Reutilização da mesma regra funcional por diferentes canais de comunicação.
+- Redução do acoplamento entre o controlador GraphQL e o serviço de aplicação.
+- Uniformização do contrato exposto pela camada GraphQL.
 - Melhor legibilidade arquitetural.
 
 ### Exemplo prático
-Tanto a mutation GraphQL `sendMessage` como o `ChatWebSocketHandler` delegam o processamento para `ChatApplication`.
+As queries/mutations do `WircController` chamam `WircFacade`, e a fachada encaminha cada operação para o serviço adequado (`UserService`, `RoomService` ou `MessageService`).
 
-## 5.2 Chain of Responsibility
+### 5.2 Chain of Responsibility
 A validação das mensagens foi implementada com **Chain of Responsibility**.
 
 ### Como foi aplicado
@@ -558,7 +584,7 @@ Cada elemento valida uma regra e encaminha o pedido para o próximo handler apen
 ### Exemplo prático
 Antes de aceitar uma mensagem, o sistema verifica campos obrigatórios, pertença do utilizador à sala e comprimento máximo permitido.
 
-## 5.3 State
+### 5.3 State
 A gestão do comportamento das salas foi implementada com **State**.
 
 ### Como foi aplicado
@@ -586,7 +612,7 @@ Quando a sala está focada, uma nova mensagem pode limpar contadores; quando est
 
 Na prática, estes estados não vivem apenas no front-end: fazem parte do domínio no back-end e também são persistidos na base de dados (campo `state` em `room_session_state`), o que permite recuperar corretamente o contexto de leitura após reinício da aplicação. O front-end limita-se a refletir esse estado recebido por GraphQL e a apresentar indicadores visuais (por exemplo, badge de mensagens não lidas).
 
-## 5.4 Factory
+### 5.4 Factory
 A criação de sessões de sala foi implementada com **Factory** através de `ChatRoomFactory`.
 
 ### Como foi aplicado
@@ -600,7 +626,7 @@ A fábrica recebe snapshots persistidos e decide que instância de estado deve s
 ### Exemplo prático
 O método `createFromSnapshot` converte o nome do estado persistido (`FOCUSED` ou `NOTIFIED`) na respetiva implementação concreta.
 
-## 5.5 Observer
+### 5.5 Observer
 Embora o enunciado peça dois ou mais padrões, o projeto também explora um comportamento do tipo **Observer**.
 
 ### Como foi aplicado no front-end
@@ -640,18 +666,18 @@ A solução demonstra preocupação com responsabilidade única:
 
 ## 7. Fluxos principais da aplicação
 
-## 7.1 Autenticação
+### 7.1 Autenticação
 1. O utilizador seleciona ou introduz credenciais no front-end.
 2. O Angular invoca a mutation `signIn`.
 3. O back-end valida o utilizador e devolve os dados autenticados.
 4. A `ChatStore` atualiza o estado global da sessão.
 
-## 7.2 Consulta de salas e mensagens
+### 7.2 Consulta de salas e mensagens
 1. Após autenticação, o front-end pede salas via GraphQL.
 2. Ao selecionar uma sala, são pedidas mensagens e estatísticas.
 3. A interface atualiza-se reativamente com base no estado da store.
 
-## 7.3 Envio de mensagens em tempo real
+### 7.3 Envio de mensagens em tempo real
 1. O utilizador escreve a mensagem no chat.
 2. O front-end envia um comando WebSocket.
 3. O `ChatWebSocketHandler` interpreta o payload.

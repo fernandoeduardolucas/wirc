@@ -1,0 +1,23 @@
+flowchart TD
+    A[Entrar na aplicação] --> B{Já tem conta?}
+    B -->|Sim| C[Autenticar com utilizador e password]
+    B -->|Não| D[Criar utilizador]
+    D --> E[Autenticação automática]
+    C --> F[Listar salas disponíveis]
+    E --> F
+    F --> G[Selecionar sala]
+    G --> H[Carregar mensagens e estatísticas]
+    H --> I{Ação pretendida}
+    I -->|Enviar mensagem| J[Enviar comando por WebSocket]
+    J --> K[Back-end valida e persiste]
+    K --> L[Difundir notificação e atualizar interface]
+    L --> I
+    I -->|Pesquisar mensagens| M[Executar query GraphQL]
+    M --> N[Mostrar resultados]
+    N --> I
+    I -->|Criar sala| O[Mutation GraphQL createRoom]
+    O --> P[Atualizar lista de salas]
+    P --> I
+    I -->|Adicionar membro| Q[Mutation GraphQL addMemberToRoom]
+    Q --> R[Atualizar participantes e permissões]
+    R --> I
