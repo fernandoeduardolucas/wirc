@@ -40,13 +40,13 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public AppUser createUser(String displayName, String password) {
-        String normalizedDisplayName = requireText(displayName, "Nome do utilizador obrigatório.");
-        String normalizedPassword = requireText(password, "Password obrigatória.");
-        ensureDisplayNameAvailable(normalizedDisplayName);
-
+        String normalizedDisplayName = validateDisplayName(displayName);
+        String normalizedPassword = validatePassword(password);
         String username = nextUsername(normalizedDisplayName);
-        AppUserEntity createdUser = appUserRepository.save(new AppUserEntity(username, normalizedDisplayName, normalizedPassword));
-        return new AppUser(createdUser.getUsername(), createdUser.getDisplayName());
+
+        AppUserEntity userToCreate = new AppUserEntity(username, normalizedDisplayName, normalizedPassword);
+        AppUserEntity createdUser = appUserRepository.save(userToCreate);
+        return toAppUser(createdUser);
     }
 
     public String requireCanonicalUser(String activeUser) {
@@ -93,6 +93,20 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException(message);
         }
         return value.trim();
+    }
+
+    private String validateDisplayName(String displayName) {
+        String normalizedDisplayName = requireText(displayName, "Nome do utilizador obrigatório.");
+        ensureDisplayNameAvailable(normalizedDisplayName);
+        return normalizedDisplayName;
+    }
+
+    private String validatePassword(String password) {
+        return requireText(password, "Password obrigatória.");
+    }
+
+    private AppUser toAppUser(AppUserEntity userEntity) {
+        return new AppUser(userEntity.getUsername(), userEntity.getDisplayName());
     }
 
     private String nextUsername(String displayName) {
