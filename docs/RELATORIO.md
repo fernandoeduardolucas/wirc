@@ -580,6 +580,12 @@ Assim, o comportamento da sala muda consoante o seu estado interno, sem necessid
 ### Exemplo prático
 Quando a sala está focada, uma nova mensagem pode limpar contadores; quando está em estado de notificação, o número de mensagens não lidas é incrementado.
 
+### Significado prático dos estados `FOCUSED` e `NOTIFIED`
+- **`FOCUSED`**: representa uma sala atualmente em foco para o utilizador ativo. Neste estado, ao interagir na sala em foco, o contador de não lidas é limpo e a experiência mantém-se "sincronizada" com o que está visível no ecrã.
+- **`NOTIFIED`**: representa uma sala com atividade não lida. Sempre que chegam mensagens fora de foco, o contador de não lidas aumenta para sinalizar que existe conteúdo por ler.
+
+Na prática, estes estados não vivem apenas no front-end: fazem parte do domínio no back-end e também são persistidos na base de dados (campo `state` em `room_session_state`), o que permite recuperar corretamente o contexto de leitura após reinício da aplicação. O front-end limita-se a refletir esse estado recebido por GraphQL e a apresentar indicadores visuais (por exemplo, badge de mensagens não lidas).
+
 ## 5.4 Factory
 A criação de sessões de sala foi implementada com **Factory** através de `ChatRoomFactory`.
 
