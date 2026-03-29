@@ -1,4 +1,4 @@
-package com.wirc.service;
+package com.wirc.facade;
 
 import com.wirc.model.AppUser;
 import com.wirc.model.ChatCommand;
@@ -6,6 +6,9 @@ import com.wirc.model.ChatMessage;
 import com.wirc.model.ChatRoom;
 import com.wirc.model.RoomStats;
 import com.wirc.model.UserMessageCount;
+import com.wirc.service.MessageService;
+import com.wirc.service.RoomService;
+import com.wirc.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +16,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class WircServiceFacadeImpl implements WircServiceFacade {
+public class WircFacadeImpl implements WircFacade {
 
     private final UserService userService;
     private final RoomService roomService;

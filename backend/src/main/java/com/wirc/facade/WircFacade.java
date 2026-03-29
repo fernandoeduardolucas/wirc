@@ -1,4 +1,4 @@
-package com.wirc.service;
+package com.wirc.facade;
 
 import com.wirc.model.AppUser;
 import com.wirc.model.ChatMessage;
@@ -8,7 +8,7 @@ import com.wirc.model.UserMessageCount;
 
 import java.util.List;
 
-public interface WircServiceFacade {
+public interface WircFacade {
     List<AppUser> users();
 
     List<ChatRoom> rooms(String activeUser);

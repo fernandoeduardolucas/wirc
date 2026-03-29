@@ -5,7 +5,7 @@ import com.wirc.model.ChatMessage;
 import com.wirc.model.ChatRoom;
 import com.wirc.model.RoomStats;
 import com.wirc.model.UserMessageCount;
-import com.wirc.service.WircServiceFacade;
+import com.wirc.facade.WircFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
@@ -18,46 +18,46 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WircController {
 
-    private final WircServiceFacade wircServiceFacade;
+    private final WircFacade wircFacade;
 
     @QueryMapping
     public List<AppUser> users() {
-        return wircServiceFacade.users();
+        return wircFacade.users();
     }
 
     @QueryMapping
     public List<ChatRoom> rooms(@Argument String activeUser) {
-        return wircServiceFacade.rooms(activeUser);
+        return wircFacade.rooms(activeUser);
     }
 
     @QueryMapping
     public List<ChatMessage> messagesByRoom(@Argument String roomId, @Argument String activeUser) {
-        return wircServiceFacade.messagesByRoom(roomId, activeUser);
+        return wircFacade.messagesByRoom(roomId, activeUser);
     }
 
     @QueryMapping
     public List<ChatMessage> searchMessages(@Argument String term, @Argument String activeUser) {
-        return wircServiceFacade.searchMessages(term, activeUser);
+        return wircFacade.searchMessages(term, activeUser);
     }
 
     @QueryMapping
     public RoomStats roomStats(@Argument String roomId, @Argument String activeUser) {
-        return wircServiceFacade.roomStats(roomId, activeUser);
+        return wircFacade.roomStats(roomId, activeUser);
     }
 
     @QueryMapping
     public List<UserMessageCount> topUsers(@Argument String activeUser) {
-        return wircServiceFacade.topUsers(activeUser);
+        return wircFacade.topUsers(activeUser);
     }
 
     @MutationMapping
     public AppUser signIn(@Argument String user, @Argument String password) {
-        return wircServiceFacade.signIn(user, password);
+        return wircFacade.signIn(user, password);
     }
 
     @MutationMapping
     public AppUser createUser(@Argument String displayName, @Argument String password) {
-        return wircServiceFacade.createUser(displayName, password);
+        return wircFacade.createUser(displayName, password);
     }
 
     @MutationMapping
@@ -68,21 +68,21 @@ public class WircController {
             @Argument String message,
             @Argument boolean focusedRoom
     ) {
-        return wircServiceFacade.sendMessage(roomId, activeUser, user, message, focusedRoom);
+        return wircFacade.sendMessage(roomId, activeUser, user, message, focusedRoom);
     }
 
     @MutationMapping
     public ChatRoom focusRoom(@Argument String roomId, @Argument String activeUser) {
-        return wircServiceFacade.focusRoom(roomId, activeUser);
+        return wircFacade.focusRoom(roomId, activeUser);
     }
 
     @MutationMapping
     public ChatRoom createRoom(@Argument String name, @Argument String activeUser, @Argument List<String> participants) {
-        return wircServiceFacade.createRoom(name, activeUser, participants);
+        return wircFacade.createRoom(name, activeUser, participants);
     }
 
     @MutationMapping
     public ChatRoom addMemberToRoom(@Argument String roomId, @Argument String member, @Argument String activeUser) {
-        return wircServiceFacade.addMemberToRoom(roomId, member, activeUser);
+        return wircFacade.addMemberToRoom(roomId, member, activeUser);
     }
 }
