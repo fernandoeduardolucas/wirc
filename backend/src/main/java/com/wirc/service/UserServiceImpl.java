@@ -49,17 +49,20 @@ public class UserServiceImpl implements UserService {
         return toAppUser(createdUser);
     }
 
+    @Override
     public String requireCanonicalUser(String activeUser) {
         return resolveCanonicalUsername(activeUser)
                 .orElseThrow(() -> new IllegalArgumentException("Autentique-se para aceder às salas."));
     }
 
+    @Override
     public AppUserEntity resolveExistingUser(String user) {
         return appUserRepository.findByUsernameIgnoreCase(user)
                 .or(() -> appUserRepository.findByDisplayNameIgnoreCase(user))
                 .orElseThrow(() -> new IllegalArgumentException("Utilizador não encontrado: " + user));
     }
 
+    @Override
     public Optional<String> resolveCanonicalUsername(String user) {
         if (user == null || user.isBlank()) {
             return Optional.empty();
@@ -70,6 +73,7 @@ public class UserServiceImpl implements UserService {
                         .map(AppUserEntity::getUsername));
     }
 
+    @Override
     public Map<String, AppUserEntity> loadUsersByUsername() {
         return appUserRepository.findAllByOrderByDisplayNameAsc().stream()
                 .collect(Collectors.toMap(

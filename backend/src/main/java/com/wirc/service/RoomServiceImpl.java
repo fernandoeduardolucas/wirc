@@ -25,25 +25,29 @@ import java.util.stream.Collectors;
 @Service
 public class RoomServiceImpl implements RoomService {
 
+    private static final String ROOM_NOT_FOUND = "Sala não encontrada: ";
+    private static final String USER_NOT_IN_ROOM = "Só pode ver conteúdo das salas às quais pertence.";
+    private static final String USER_CANNOT_MANAGE_ROOM = "Só utilizadores da sala podem adicionar novos utilizadores.";
+
     private final ChatStateRegistry chatStateRegistry;
     private final DatabaseChatStateStore chatStateStore;
     private final ChatRoomRepository chatRoomRepository;
-    private final UserServiceImpl userApplication;
+    private final UserService userFacade;
 
     public RoomServiceImpl(
             ChatStateRegistry chatStateRegistry,
             DatabaseChatStateStore chatStateStore,
             ChatRoomRepository chatRoomRepository,
-            UserServiceImpl userApplication) {
+            UserService userFacade) {
         this.chatStateRegistry = chatStateRegistry;
         this.chatStateStore = chatStateStore;
         this.chatRoomRepository = chatRoomRepository;
-        this.userApplication = userApplication;
+        this.userFacade = userFacade;
     }
 
     @Override
     public List<ChatRoom> rooms(String activeUser) {
-        String canonicalUser = userApplication.requireCanonicalUser(activeUser);
+        String canonicalUser = userFacade.requireCanonicalUser(activeUser);
         return chatStateRegistry.rooms().values().stream()
                 .filter(room -> room.participants().contains(canonicalUser))
                 .sorted(Comparator.comparing(RoomSession::name))
@@ -56,7 +60,7 @@ public class RoomServiceImpl implements RoomService {
         RoomSession room = requireAccessibleRoom(roomId, activeUser);
         room.state().onRoomFocused(room);
         persistState();
-        return toChatRoom(room, userApplication.requireCanonicalUser(activeUser));
+        return toChatRoom(room, userFacade.requireCanonicalUser(activeUser));
     }
 
     @Override
@@ -76,7 +80,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     public List<UserMessageCount> topUsers(String activeUser) {
-        String canonicalUser = userApplication.requireCanonicalUser(activeUser);
+        String canonicalUser = userFacade.requireCanonicalUser(activeUser);
         return chatStateRegistry.rooms().values().stream()
                 .filter(room -> room.participants().contains(canonicalUser))
                 .flatMap(room -> room.messages().stream())
@@ -91,17 +95,11 @@ public class RoomServiceImpl implements RoomService {
     @Override
     @Transactional
     public ChatRoom createRoom(String name, String activeUser, List<String> participants) {
-        AppUserEntity actor = userApplication.resolveExistingUser(activeUser);
+        AppUserEntity actor = userFacade.resolveExistingUser(activeUser);
         String roomName = requireText(name, "Nome da sala obrigatório.");
         LinkedHashMap<String, String> canonicalParticipants = resolveCanonicalParticipants(actor, participants);
 
-        String roomId = nextRoomId(roomName);
-        ChatRoomEntity roomEntity = new ChatRoomEntity(roomId, roomName);
-        addMembersToEntity(roomEntity, canonicalParticipants.values());
-        chatRoomRepository.save(roomEntity);
-
-        RoomSession roomSession = new RoomSession(roomId, roomName, new com.wirc.state.FocusedRoomState(), new ArrayList<>(canonicalParticipants.values()));
-        chatStateRegistry.rooms().put(roomId, roomSession);
+        RoomSession roomSession = createAndStoreRoom(roomName, canonicalParticipants.values());
         persistState();
         return toChatRoom(roomSession, actor.getUsername());
     }
@@ -110,31 +108,29 @@ public class RoomServiceImpl implements RoomService {
     @Transactional
     public ChatRoom addMemberToRoom(String roomId, String member, String activeUser) {
         RoomSession room = chatStateRegistry.requireRoom(roomId);
-        AppUserEntity actor = userApplication.resolveExistingUser(activeUser);
+        AppUserEntity actor = userFacade.resolveExistingUser(activeUser);
         ensureUserCanManageRoom(room, actor);
 
-        AppUserEntity memberEntity = userApplication.resolveExistingUser(member);
-        room.participants().add(memberEntity.getUsername());
+        AppUserEntity memberEntity = userFacade.resolveExistingUser(member);
+        addParticipantIfMissing(room, memberEntity.getUsername());
 
-        ChatRoomEntity roomEntity = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Sala não encontrada: " + roomId));
-        roomEntity.addMember(memberEntity);
-        chatRoomRepository.save(roomEntity);
+        ChatRoomEntity roomEntity = requireRoomEntity(roomId);
+        addMemberToEntity(roomEntity, memberEntity);
         persistState();
         return toChatRoom(room, actor.getUsername());
     }
 
     public RoomSession requireAccessibleRoom(String roomId, String activeUser) {
         RoomSession room = chatStateRegistry.requireRoom(roomId);
-        String canonicalUser = userApplication.requireCanonicalUser(activeUser);
+        String canonicalUser = userFacade.requireCanonicalUser(activeUser);
         if (!room.participants().contains(canonicalUser)) {
-            throw new IllegalArgumentException("Só pode ver conteúdo das salas às quais pertence.");
+            throw new IllegalArgumentException(USER_NOT_IN_ROOM);
         }
         return room;
     }
 
     private ChatRoom toChatRoom(RoomSession room, String activeUser) {
-        Map<String, AppUserEntity> usersByUsername = userApplication.loadUsersByUsername();
+        Map<String, AppUserEntity> usersByUsername = userFacade.loadUsersByUsername();
         return new ChatRoom(
                 room.id(),
                 room.name(),
@@ -150,7 +146,7 @@ public class RoomServiceImpl implements RoomService {
 
     private void ensureUserCanManageRoom(RoomSession room, AppUserEntity actor) {
         if (!room.participants().contains(actor.getUsername())) {
-            throw new IllegalArgumentException("Só utilizadores da sala podem adicionar novos utilizadores.");
+            throw new IllegalArgumentException(USER_CANNOT_MANAGE_ROOM);
         }
     }
 
@@ -176,14 +172,53 @@ public class RoomServiceImpl implements RoomService {
         LinkedHashMap<String, String> canonicalParticipants = new LinkedHashMap<>();
         canonicalParticipants.put(actor.getUsername(), actor.getUsername());
         normalizeParticipantList(participants).stream()
-                .map(userApplication::resolveExistingUser)
+                .map(userFacade::resolveExistingUser)
                 .forEach(participant -> canonicalParticipants.put(participant.getUsername(), participant.getUsername()));
         return canonicalParticipants;
     }
 
+    private RoomSession createAndStoreRoom(String roomName, Iterable<String> usernames) {
+        String roomId = nextRoomId(roomName);
+        List<String> participantList = toList(usernames);
+
+        ChatRoomEntity roomEntity = new ChatRoomEntity(roomId, roomName);
+        addMembersToEntity(roomEntity, participantList);
+        chatRoomRepository.save(roomEntity);
+
+        RoomSession roomSession = new RoomSession(
+                roomId,
+                roomName,
+                new com.wirc.state.FocusedRoomState(),
+                new ArrayList<>(participantList));
+        chatStateRegistry.rooms().put(roomId, roomSession);
+        return roomSession;
+    }
+
+    private List<String> toList(Iterable<String> usernames) {
+        List<String> participantList = new ArrayList<>();
+        usernames.forEach(participantList::add);
+        return participantList;
+    }
+
+    private ChatRoomEntity requireRoomEntity(String roomId) {
+        return chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException(ROOM_NOT_FOUND + roomId));
+    }
+
+    private void addParticipantIfMissing(RoomSession room, String username) {
+        if (!room.participants().contains(username)) {
+            room.participants().add(username);
+        }
+    }
+
+    private void addMemberToEntity(ChatRoomEntity roomEntity, AppUserEntity memberEntity) {
+        roomEntity.addMember(memberEntity);
+        chatRoomRepository.save(roomEntity);
+    }
+
     private void addMembersToEntity(ChatRoomEntity roomEntity, Iterable<String> usernames) {
         for (String username : usernames) {
-            roomEntity.addMember(userApplication.resolveExistingUser(username));
+            roomEntity.addMember(userFacade.resolveExistingUser(username));
         }
     }
 
