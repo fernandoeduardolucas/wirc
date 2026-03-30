@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wirc.gateway.WebSocketNotificationGateway;
 import com.wirc.model.ChatCommand;
-import com.wirc.service.ChatApplication;
+import com.wirc.service.MessageService;
 import com.wirc.model.WebSocketChatCommand;
 import com.wirc.model.WebSocketServerMessage;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import java.io.IOException;
 public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     private final WebSocketNotificationGateway gateway;
-    private final ChatApplication chatApplication;
+    private final MessageService messageService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -49,7 +49,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
             log.info("Encaminhando mensagem entre utilizadores: sessionId={}, roomId={}, user={}, focusedRoom={}",
                     session.getId(), command.roomId(), command.user(), command.focusedRoom());
-            chatApplication.sendMessage(new ChatCommand(
+            messageService.sendMessage(new ChatCommand(
                     command.roomId(),
                     command.activeUser(),
                     command.user(),

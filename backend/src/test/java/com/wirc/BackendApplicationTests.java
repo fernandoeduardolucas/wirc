@@ -2,7 +2,9 @@ package com.wirc;
 
 import com.wirc.model.AppUser;
 import com.wirc.model.ChatCommand;
-import com.wirc.service.ChatApplication;
+import com.wirc.service.MessageService;
+import com.wirc.service.RoomService;
+import com.wirc.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +26,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 })
 class BackendApplicationTests {
     @Autowired
-    private ChatApplication chatApplicationFacade;
+    private MessageService messageService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private RoomService roomService;
+
 
     @BeforeEach
     void clearStateFile() throws Exception {
@@ -33,29 +42,29 @@ class BackendApplicationTests {
 
     @Test
     void contextLoads() {
-        assertThat(chatApplicationFacade.rooms("Ana")).hasSize(2);
+        assertThat(roomService.rooms("Ana")).hasSize(2);
     }
 
     @Test
     void sendsMessageUsingDisplayNameByPersistingCanonicalUsername() {
-        chatApplicationFacade.sendMessage(new ChatCommand("room-equipa", "Ana", "Ana", "Olá websocket", false));
+        messageService.sendMessage(new ChatCommand("room-equipa", "Ana", "Ana", "Olá websocket", false));
 
-        assertThat(chatApplicationFacade.messagesByRoom("room-equipa", "Ana"))
+        assertThat(messageService.messagesByRoom("room-equipa", "Ana"))
                 .extracting(message -> message.user() + ":" + message.message())
                 .contains("ana:Olá websocket");
     }
 
     @Test
     void createsUserWithGeneratedUsername() {
-        AppUser created = chatApplicationFacade.createUser("Novo Utilizador", "1234");
+        AppUser created = userService.createUser("Novo Utilizador", "1234");
 
         assertThat(created.username()).isEqualTo("novo-utilizador");
-        assertThat(chatApplicationFacade.signIn("Novo Utilizador", "1234").displayName()).isEqualTo("Novo Utilizador");
+        assertThat(userService.signIn("Novo Utilizador", "1234").displayName()).isEqualTo("Novo Utilizador");
     }
 
     @Test
     void blocksReadingRoomsFromNonMembers() {
-        assertThatThrownBy(() -> chatApplicationFacade.messagesByRoom("room-equipa", "Carla"))
+        assertThatThrownBy(() -> messageService.messagesByRoom("room-equipa", "Carla"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Só pode ver conteúdo das salas às quais pertence");
     }
