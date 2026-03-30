@@ -565,7 +565,7 @@ Em vez de expor os serviços de domínio diretamente no controlador, o sistema u
 ### Exemplo prático
 As queries/mutations do `WircController` chamam `WircFacade`, e a fachada encaminha cada operação para o serviço adequado (`UserService`, `RoomService` ou `MessageService`).
 
-### Traço direto no código implementado
+### No código implementado
 - O `WircController` injeta apenas `WircFacade` e limita-se a delegar as operações GraphQL (`users`, `rooms`, `messagesByRoom`, `roomStats`, `topUsers`, `signIn`, `createUser`, `sendMessage`, `focusRoom`, `createRoom`, `addMemberToRoom`), mantendo o controlador fino e sem regras de negócio.
 - O contrato agregado está na interface `WircFacade`, que representa o ponto de entrada da camada aplicacional para GraphQL.
 - A classe `WircFacadeImpl` distribui cada operação pelos serviços especializados (`UserService`, `RoomService`, `MessageService`), concretizando o objetivo de ocultar a complexidade interna atrás de uma API estável.
@@ -595,7 +595,7 @@ Cada elemento valida uma regra e encaminha o pedido para o próximo handler apen
 ### Exemplo prático
 Antes de aceitar uma mensagem, o sistema verifica campos obrigatórios, pertença do utilizador à sala e comprimento máximo permitido.
 
-### Traço direto no código implementado
+### No código implementado
 - A classe base `MessageValidationHandler` define `linkWith(...)` e `validate(...)`, permitindo encadear validadores e aplicar o próximo apenas após sucesso no atual.
 - `RequiredFieldValidationHandler` valida `roomId`, `user` e `message`.
 - `ParticipantValidationHandler` verifica se a sala existe e se o emissor pertence aos participantes da sala.
@@ -638,7 +638,7 @@ Quando a sala está focada, uma nova mensagem pode limpar contadores; quando est
 
 Na prática, estes estados não vivem apenas no front-end: fazem parte do domínio no back-end e também são persistidos na base de dados (campo `state` em `room_session_state`), o que permite recuperar corretamente o contexto de leitura após reinício da aplicação. O front-end limita-se a refletir esse estado recebido por GraphQL e a apresentar indicadores visuais (por exemplo, badge de mensagens não lidas).
 
-### Traço direto no código implementado
+### No código implementado
 - `RoomState` define o protocolo comportamental (`onMessageSent`, `onRoomFocused`) sem impor implementação concreta.
 - `FocusedRoomState`:
   - se `focused=true`, limpa não lidas;
@@ -669,7 +669,7 @@ A fábrica recebe snapshots persistidos e decide que instância de estado deve s
 ### Exemplo prático
 O método `createFromSnapshot` converte o nome do estado persistido (`FOCUSED` ou `NOTIFIED`) na respetiva implementação concreta.
 
-### Traço direto no código implementado
+### No código implementado
 - `ChatRoomFactory` é o ponto único de construção de `RoomSession` a partir de `RoomSessionSnapshot`.
 - O método `toState(...)` aplica a política de instanciação (`"FOCUSED" -> FocusedRoomState`, `"NOTIFIED" -> NotifiedRoomState`).
 - `createFromSnapshot(...)` recompõe estado, participantes, mensagens e contagem de não lidas, devolvendo uma sessão pronta para uso.
@@ -680,55 +680,6 @@ O método `createFromSnapshot` converte o nome do estado persistido (`FOCUSED` o
 2. Para cada snapshot, a fábrica escolhe a classe de estado adequada.
 3. A fábrica instancia `RoomSession` com os dados de domínio já reidratados.
 4. O registo de salas em memória passa a operar sobre objetos completos e consistentes.
-
-### 5.5 Observer
-Embora o enunciado peça dois ou mais padrões, o projeto também explora um comportamento do tipo **Observer**.
-
-### Como foi aplicado no front-end
-A `ChatStore` usa subjects e observables para propagar alterações de estado aos componentes inscritos.
-
-### Como foi aplicado no back-end
-O gateway e o handler WebSocket mantêm sessões ativas e difundem eventos para os clientes ligados.
-
-### Benefícios
-- Atualização reativa da interface.
-- Baixo acoplamento entre produtores e consumidores de eventos.
-- Boa adequação a cenários de tempo real.
-
-### Traço direto no código implementado
-- No front-end, `ChatStore` usa `BehaviorSubject` e `Observable` para publicar alterações de estado (`rooms$`, `messages$`, `stats$`, `notification$`, etc.) que os componentes consomem por subscrição.
-- Ainda no front-end, o callback de WebSocket (`handleNotification`) atualiza reativamente mensagens, notificações e refresh de dados sem polling.
-- No back-end, `ChatWebSocketHandler` regista/remove sessões e encaminha comandos de entrada.
-- `WebSocketNotificationGatewayImpl` mantém o conjunto de sessões e executa broadcast para todos os clientes abertos.
-- `MessageServiceImpl` atua como produtor do evento de domínio “nova mensagem” e solicita ao gateway a sua difusão.
-
-### Fluxo representativo (Observer)
-1. Um produtor gera evento (`NEW_MESSAGE`).
-2. O gateway propaga para todos os observadores registados (sessões WebSocket).
-3. Cada cliente recebe o evento e atualiza o seu estado local (`ChatStore`).
-4. Os componentes renderizam automaticamente a nova informação.
-
----
-
-## 6. Outros padrões e princípios observáveis
-
-### 6.1 Repository
-Os repositórios JPA abstraem o acesso à base de dados, separando persistência de lógica de negócio.
-
-### 6.2 MVC / Controller-Service separation
-O back-end está organizado de forma próxima de **Controller + Service + Repository**, o que ajuda a estruturar responsabilidades.
-
-### 6.3 Dependency Injection
-A aplicação tira partido da **injeção de dependências** do Spring e do Angular, promovendo baixo acoplamento e maior facilidade de teste.
-
-### 6.4 Single Responsibility Principle
-A solução demonstra preocupação com responsabilidade única:
-- componentes visuais tratam da apresentação;
-- o serviço Angular comunica com a API;
-- a store gere estado;
-- o controller expõe operações;
-- o serviço de aplicação contém regras de negócio;
-- os handlers validam regras específicas.
 
 ---
 
